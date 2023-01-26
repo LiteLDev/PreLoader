@@ -1,0 +1,16 @@
+BasedOnStyle: LLVM
+AccessModifierOffset: -4
+AlignAfterOpenBracket: Align
+AllowShortLambdasOnASingleLine: All
+AlwaysBreakAfterDefinitionReturnType: None
+AlwaysBreakTemplateDeclarations: 'Yes'
+BreakBeforeBraces: Custom
+ColumnLimit: 120
+CommentPragmas: '^ IWYU pragma:'
+ConstructorInitializerIndentWidth: 0
+IndentWidth: 4
+Language: Cpp
+MaxEmptyLinesToKeep: 2
+PointerAlignment: Left
+TabWidth: 4
+UseTab: Never
