@@ -147,7 +147,7 @@ void InitFastDlsym(const PDB::RawFile& rawPdbFile, const PDB::DBIStream& dbiStre
                 continue;
             funcMap->emplace(record->data.S_PUB32.name, rva);
 
-            auto fake = pl::getFakeSymbol(record->data.S_PUB32.name);
+            auto fake = pl::fake_symbol::getFakeSymbol(record->data.S_PUB32.name);
             if (fake.has_value())
                 funcMap->emplace(fake.value(), rva);
         }
