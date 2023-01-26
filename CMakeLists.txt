@@ -42,7 +42,3 @@ target_link_options(
 )
 
 target_link_libraries(PreLoader PRIVATE raw_pdb phmap detours nlohmann_json Demangler)
-
-# print c++ build flags
-get_target_property(CPP_FLAGS PreLoader COMPILE_OPTIONS)
-message(STATUS "C++ flags: ${CPP_FLAGS}")
