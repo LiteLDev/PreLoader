@@ -64,4 +64,3 @@ jobs:
           files: |
             preloader-${{ env.VERSION }}-windows-amd64/PreLoader.dll
             preloader-${{ env.VERSION }}-windows-amd64-pdb/PreLoader.pdb
-            
