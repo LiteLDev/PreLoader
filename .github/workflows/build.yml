@@ -1,0 +1,66 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  release:
+    types: 
+      - released
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+    runs-on: windows-latest
+    steps:
+      - name: Get version if release
+        if: github.event_name == 'release'
+        run: echo "VERSION=${{ github.ref_name }}" | sed 's/=v/=/' >> $env:GITHUB_ENV
+
+      - name: Set default version if not release
+        if: github.event_name != 'release'
+        run: echo "VERSION=0.0.0" >> $env:GITHUB_ENV
+
+      - name: Checkout the repository
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Build PreLoader
+        run: |
+          mkdir -p build
+          cd build
+          cmake ..
+          cmake --build . --config Release -j
+
+      - name: Upload build
+        uses: actions/upload-artifact@v3
+        with:
+          name: preloader-${{ env.VERSION }}-windows-amd64
+          path: build/Release/PreLoader.dll
+
+      - name: Upload PDB file
+        uses: actions/upload-artifact@v3
+        with:
+          name: preloader-${{ env.VERSION }}-windows-amd64-pdb
+          path: build/Release/PreLoader.pdb
+
+  upload-to-release:
+    name: Upload to release
+    needs: 
+      - build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    steps:
+      - name: Get version
+        run: echo "VERSION=${{ github.ref_name }}" | sed 's/=v/=/' >> $GITHUB_ENV
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+          
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            preloader-${{ env.VERSION }}-windows-amd64/PreLoader.dll
+            preloader-${{ env.VERSION }}-windows-amd64-pdb/PreLoader.pdb
