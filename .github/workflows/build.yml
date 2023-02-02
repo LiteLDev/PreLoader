@@ -37,7 +37,13 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: preloader-${{ env.VERSION }}-windows-amd64
-          path: build
+          path: build/Release/PreLoader.dll
+
+      - name: Upload PDB file
+        uses: actions/upload-artifact@v3
+        with:
+          name: preloader-${{ env.VERSION }}-windows-amd64-pdb
+          path: build/Release/PreLoader.pdb
 
   upload-to-release:
     name: Upload to release
@@ -51,13 +57,10 @@ jobs:
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
-
-      - name: Pack artifacts
-        run: |
-          zip -9r preloader-${{ env.VERSION }}-windows-amd64.zip preloader-${{ env.VERSION }}-windows-amd64
           
       - name: Upload release assets
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            preloader-${{ env.VERSION }}-windows-amd64.zip
+            preloader-${{ env.VERSION }}-windows-amd64/PreLoader.dll
+            preloader-${{ env.VERSION }}-windows-amd64-pdb/PreLoader.pdb
