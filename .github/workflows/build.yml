@@ -53,7 +53,7 @@ jobs:
     if: github.event_name == 'release'
     steps:
       - name: Get version
-        run: echo "VERSION=${{ github.ref_name }}" | sed 's/=v/=/' >> $env:GITHUB_ENV
+        run: echo "VERSION=${{ github.ref_name }}" | sed 's/=v/=/' >> $GITHUB_ENV
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
