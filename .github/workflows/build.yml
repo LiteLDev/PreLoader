@@ -28,6 +28,7 @@ jobs:
 
       - name: Build PreLoader
         run: |
+          mkdir -p build
           cmake --build build --config Release
 
       - name: Upload build
