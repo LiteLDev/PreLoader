@@ -30,7 +30,7 @@ Steps to reproduce the behavior:
 **Platform (please complete the following information):**
 
 - OS: <!-- [e.g. Windows 10 21H2] -->
-- Lip version: <!-- [e.g. 0.1.0] -->
+- Version: <!-- [e.g. 0.1.0] -->
 
 **Additional context**
 
