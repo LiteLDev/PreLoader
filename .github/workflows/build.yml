@@ -15,11 +15,11 @@ jobs:
     steps:
       - name: Get version if release
         if: github.event_name == 'release'
-        run: echo "VERSION=${{ github.ref_name }}" | sed 's/=v/=/' >> $GITHUB_ENV
+        run: echo "VERSION=${{ github.ref_name }}" | sed 's/=v/=/' >> $env:GITHUB_ENV
 
       - name: Set default version if not release
         if: github.event_name != 'release'
-        run: echo "VERSION=0.0.0" >> $GITHUB_ENV
+        run: echo "VERSION=0.0.0" >> $env:GITHUB_ENV
 
       - name: Checkout the repository
         uses: actions/checkout@v3
@@ -53,7 +53,7 @@ jobs:
     if: github.event_name == 'release'
     steps:
       - name: Get version
-        run: echo "VERSION=${{ github.ref_name }}" | sed 's/=v/=/' >> $GITHUB_ENV
+        run: echo "VERSION=${{ github.ref_name }}" | sed 's/=v/=/' >> $env:GITHUB_ENV
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
