@@ -7,11 +7,18 @@ namespace pl::utils {
 struct MemoryFile {
     HANDLE file;
     HANDLE fileMapping;
-    void* baseAddress;
+    void*  baseAddress;
 
     static MemoryFile Open(const wchar_t* path) {
-        HANDLE file =
-            CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, nullptr);
+        HANDLE file = CreateFileW(
+            path,
+            GENERIC_READ,
+            FILE_SHARE_READ,
+            nullptr,
+            OPEN_EXISTING,
+            FILE_ATTRIBUTE_READONLY,
+            nullptr
+        );
         if (file == INVALID_HANDLE_VALUE) {
             return {INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, nullptr};
         }
@@ -39,7 +46,7 @@ struct MemoryFile {
         CloseHandle(handle.fileMapping);
         CloseHandle(handle.file);
 
-        handle.file = nullptr;
+        handle.file        = nullptr;
         handle.fileMapping = nullptr;
         handle.baseAddress = nullptr;
     }

@@ -13,10 +13,10 @@
 namespace pl::hook {
 
 struct HookElement {
-    FuncPtr detour{};
+    FuncPtr  detour{};
     FuncPtr* originalFunc{};
-    int priority{};
-    int id{};
+    int      priority{};
+    int      id{};
 
     bool operator<(const HookElement& other) const {
         if (priority != other.priority)
@@ -26,11 +26,11 @@ struct HookElement {
 };
 
 struct HookData {
-    FuncPtr target{};
-    FuncPtr origin{};
-    FuncPtr start{};
-    FuncPtr thunk{};
-    int hookId{};
+    FuncPtr               target{};
+    FuncPtr               origin{};
+    FuncPtr               start{};
+    FuncPtr               thunk{};
+    int                   hookId{};
     std::set<HookElement> hooks{};
 
     inline ~HookData() {
@@ -44,10 +44,10 @@ struct HookData {
         for (auto& item : this->hooks) {
             if (last == nullptr) {
                 this->start = item.detour;
-                last = item.originalFunc;
+                last        = item.originalFunc;
             } else {
                 *last = item.detour;
-                last = item.originalFunc;
+                last  = item.originalFunc;
             }
         }
         if (last == nullptr)
@@ -56,19 +56,24 @@ struct HookData {
             *last = this->origin;
     }
 
-    inline int incrementHookId() { return ++hookId; }
+    inline int incrementHookId() {
+        return ++hookId;
+    }
 };
 
 std::unordered_map<FuncPtr, std::shared_ptr<HookData>> hooks{};
+
 std::mutex hooksMutex{};
 
 struct AutoUnlock {
-    ~AutoUnlock() { hooksMutex.unlock(); }
+    ~AutoUnlock() {
+        hooksMutex.unlock();
+    }
 };
 
 FuncPtr createThunk(FuncPtr* target) {
-    constexpr auto THUNK_SIZE = 18;
-    unsigned char thunkData[THUNK_SIZE] = {0};
+    constexpr auto THUNK_SIZE            = 18;
+    unsigned char  thunkData[THUNK_SIZE] = {0};
     // generate a thunk:
     // mov rax hooker1
     thunkData[0] = 0x48;
@@ -102,7 +107,7 @@ int processHook(FuncPtr target, FuncPtr detour, FuncPtr* originalFunc) {
 [[maybe_unused]] int pl_hook(FuncPtr target, FuncPtr detour, FuncPtr* originalFunc, Priority priority) {
     hooksMutex.lock();
     AutoUnlock unlock;
-    auto it = hooks.find(target);
+    auto       it = hooks.find(target);
     if (it != hooks.end()) {
         auto hookData = it->second;
         hookData->hooks.insert({detour, originalFunc, priority, hookData->incrementHookId()});
@@ -110,7 +115,7 @@ int processHook(FuncPtr target, FuncPtr detour, FuncPtr* originalFunc) {
         return ERROR_SUCCESS;
     }
 
-    auto hookData = new HookData{target, target, detour, nullptr, {}, {}};
+    auto hookData   = new HookData{target, target, detour, nullptr, {}, {}};
     hookData->thunk = createThunk(&hookData->start);
     hookData->hooks.insert({detour, originalFunc, priority, hookData->incrementHookId()});
     auto ret = processHook(target, hookData->thunk, &hookData->origin);
@@ -126,7 +131,7 @@ int processHook(FuncPtr target, FuncPtr detour, FuncPtr* originalFunc) {
 [[maybe_unused]] bool pl_unhook(FuncPtr target, FuncPtr detour) {
     hooksMutex.lock();
     AutoUnlock unlock;
-    auto hookDataIter = hooks.find(target);
+    auto       hookDataIter = hooks.find(target);
     if (hookDataIter == hooks.end()) {
         return false;
     }

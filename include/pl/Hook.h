@@ -10,10 +10,10 @@ typedef void* FuncPtr;
 
 enum Priority : int {
     PriorityHighest = 0,
-    PriorityHigh = 100,
-    PriorityNormal = 200,
-    PriorityLow = 300,
-    PriorityLowest = 400,
+    PriorityHigh    = 100,
+    PriorityNormal  = 200,
+    PriorityLow     = 300,
+    PriorityLowest  = 400,
 };
 
 PLCAPI int pl_hook(FuncPtr target, FuncPtr detour, FuncPtr* originalFunc, Priority priority);

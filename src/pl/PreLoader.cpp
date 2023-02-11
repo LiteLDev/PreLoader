@@ -26,7 +26,7 @@ void addLibraryToPath() {
     if (!buffer)
         return;
 
-    DWORD length = GetEnvironmentVariableW(L"PATH", buffer, MAX_PATH_LENGTH);
+    DWORD        length = GetEnvironmentVariableW(L"PATH", buffer, MAX_PATH_LENGTH);
     std::wstring path(buffer, length);
     length = GetCurrentDirectoryW(MAX_PATH_LENGTH, buffer);
     std::wstring currentDir(buffer, length);
@@ -46,8 +46,15 @@ bool loadLibrary(const string& libName, bool showFailInfo = true) {
             Error("Can't load {} !", libName);
             Error("Error code: {} !", error_message_id);
             LPWSTR message_buffer = nullptr;
-            FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
-                          nullptr, error_message_id, NULL, (LPWSTR)&message_buffer, NULL, nullptr);
+            FormatMessage(
+                FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
+                nullptr,
+                error_message_id,
+                NULL,
+                (LPWSTR)&message_buffer,
+                NULL,
+                nullptr
+            );
             Error("{}", wstr2str(message_buffer));
             LocalFree(message_buffer);
         }
@@ -62,8 +69,8 @@ void loadRawLibraries() {
         if (!file.is_regular_file())
             continue;
 
-        auto& path = file.path();
-        auto fileName = path.u8string();
+        auto& path     = file.path();
+        auto  fileName = path.u8string();
 
         string ext = path.extension().u8string();
         if (ext != ".dll") {
@@ -74,7 +81,7 @@ void loadRawLibraries() {
             continue;
 
         string dllFileName = path.filename().u8string();
-        auto lib = LoadLibrary(str2wstr(fileName).c_str());
+        auto   lib         = LoadLibrary(str2wstr(fileName).c_str());
         if (lib) {
             Info("Dll <{}> Injected", dllFileName);
         } else {
@@ -142,7 +149,7 @@ void init() {
     auto buffer = new wchar_t[MAX_PATH];
     GetModuleFileNameW(hModule, buffer, MAX_PATH);
     std::wstring path(buffer);
-    auto cwd = path.substr(0, path.find_last_of('\\'));
+    auto         cwd = path.substr(0, path.find_last_of('\\'));
     SetCurrentDirectoryW(cwd.c_str());
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOALIGNMENTFAULTEXCEPT);
 

@@ -45,22 +45,24 @@ inline void loadLoggerConfig() {
     }
 }
 
-#define COLOR_TIME fmt::color::light_blue
-#define COLOR_INFO_PREFIX fmt::color::light_sea_green
-#define COLOR_INFO_TEXT fmt::terminal_color::white
-#define COLOR_WARN_PREFIX fmt::terminal_color::bright_yellow
-#define COLOR_WARN_TEXT fmt::terminal_color::yellow
+#define COLOR_TIME         fmt::color::light_blue
+#define COLOR_INFO_PREFIX  fmt::color::light_sea_green
+#define COLOR_INFO_TEXT    fmt::terminal_color::white
+#define COLOR_WARN_PREFIX  fmt::terminal_color::bright_yellow
+#define COLOR_WARN_TEXT    fmt::terminal_color::yellow
 #define COLOR_ERROR_PREFIX fmt::terminal_color::bright_red
-#define COLOR_ERROR_TEXT fmt::terminal_color::red
+#define COLOR_ERROR_TEXT   fmt::terminal_color::red
 
 #define LOG_PREFIX(prefix, color1, color2)                                                                             \
-    fmt::print(shouldLogColor ? fmt::fg(color1) : fmt::text_style(),                                                   \
-               fmt::format("{:%H:%M:%S}", fmt::localtime(_time64(0))));                                                \
+    fmt::print(                                                                                                        \
+        shouldLogColor ? fmt::fg(color1) : fmt::text_style(),                                                          \
+        fmt::format("{:%H:%M:%S}", fmt::localtime(_time64(0)))                                                         \
+    );                                                                                                                 \
     fmt::print(shouldLogColor ? fmt::fg(color2) : fmt::text_style(), fmt::format(prefix, fmt::localtime(_time64(0))));
 #define LOG(color1, color2, prefix)                                                                                    \
     LOG_PREFIX(prefix, color1, color2);                                                                                \
     std::string str = fmt::format("[PreLoader] ", fmt::localtime(_time64(0)));                                         \
-    str += fmt::format(formatStr, args...);                                                                            \
+    str             += fmt::format(formatStr, args...);                                                                \
     str.append(1, '\n');
 
 template <typename... Args>

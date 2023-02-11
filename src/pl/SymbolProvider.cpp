@@ -25,22 +25,22 @@ using std::unordered_map, std::unordered_multimap, std::vector;
 
 using namespace pl::utils;
 
-bool fastDlsymState = false;
-bool initialized = false;
+bool             fastDlsymState = false;
+bool             initialized    = false;
 static uintptr_t imageBaseAddr;
 
-std::mutex dlsymLock{};
+std::mutex                                  dlsymLock{};
 phmap::flat_hash_map<string, int, ap_hash>* funcMap;
-unordered_multimap<int, string*>* rvaMap;
+unordered_multimap<int, string*>*           rvaMap;
 
 void testFuncMap() {
     return;
     // TODO: Update check symbol
-    constexpr auto TEST_SYMBOL = "?initializeLogging@DedicatedServer@@AEAAXXZ";
-    auto handle = GetModuleHandle(nullptr);
-    auto exportedFuncAddr = GetProcAddress(handle, TEST_SYMBOL);
-    void* symDbFn = nullptr;
-    auto iter = funcMap->find(string(TEST_SYMBOL));
+    constexpr auto TEST_SYMBOL      = "?initializeLogging@DedicatedServer@@AEAAXXZ";
+    auto           handle           = GetModuleHandle(nullptr);
+    auto           exportedFuncAddr = GetProcAddress(handle, TEST_SYMBOL);
+    void*          symDbFn          = nullptr;
+    auto           iter             = funcMap->find(string(TEST_SYMBOL));
     if (iter != funcMap->end()) {
         symDbFn = (void*)(imageBaseAddr + iter->second);
     }
@@ -52,7 +52,7 @@ void testFuncMap() {
 
 void initFastDlsym(const PDB::RawFile& rawPdbFile, const PDB::DBIStream& dbiStream) {
     Info("Loading symbols from pdb...");
-    funcMap = new phmap::flat_hash_map<string, int, ap_hash>;
+    funcMap                                          = new phmap::flat_hash_map<string, int, ap_hash>;
     const PDB::ImageSectionStream imageSectionStream = dbiStream.CreateImageSectionStream(rawPdbFile);
     const PDB::CoalescedMSFStream symbolRecordStream = dbiStream.CreateSymbolRecordStream(rawPdbFile);
     const PDB::PublicSymbolStream publicSymbolStream = dbiStream.CreatePublicSymbolStream(rawPdbFile);
@@ -61,8 +61,8 @@ void initFastDlsym(const PDB::RawFile& rawPdbFile, const PDB::DBIStream& dbiStre
 
     for (const PDB::HashRecord& hashRecord : hashRecords) {
         const PDB::CodeView::DBI::Record* record = publicSymbolStream.GetRecord(symbolRecordStream, hashRecord);
-        const uint32_t rva =
-            imageSectionStream.ConvertSectionOffsetToRVA(record->data.S_PUB32.section, record->data.S_PUB32.offset);
+        const uint32_t                    rva
+            = imageSectionStream.ConvertSectionOffsetToRVA(record->data.S_PUB32.section, record->data.S_PUB32.offset);
         if (rva == 0u)
             continue;
         funcMap->emplace(record->data.S_PUB32.name, rva);
@@ -73,6 +73,7 @@ void initFastDlsym(const PDB::RawFile& rawPdbFile, const PDB::DBIStream& dbiStre
     }
 
     const PDB::ModuleInfoStream moduleInfoStream = dbiStream.CreateModuleInfoStream(rawPdbFile);
+
     const PDB::ArrayView<PDB::ModuleInfoStream::Module> modules = moduleInfoStream.GetModules();
 
     for (const PDB::ModuleInfoStream::Module& module : modules) {
@@ -82,8 +83,10 @@ void initFastDlsym(const PDB::RawFile& rawPdbFile, const PDB::DBIStream& dbiStre
         moduleSymbolStream.ForEachSymbol([&imageSectionStream](const PDB::CodeView::DBI::Record* record) {
             if (record->header.kind != PDB::CodeView::DBI::SymbolRecordKind::S_LPROC32)
                 return;
-            const uint32_t rva = imageSectionStream.ConvertSectionOffsetToRVA(record->data.S_LPROC32.section,
-                                                                              record->data.S_LPROC32.offset);
+            const uint32_t rva = imageSectionStream.ConvertSectionOffsetToRVA(
+                record->data.S_LPROC32.section,
+                record->data.S_LPROC32.offset
+            );
             string name = record->data.S_LPROC32.name;
             if (name.find("lambda") != std::string::npos) {
                 funcMap->emplace(record->data.S_LPROC32.name, rva);
@@ -112,7 +115,7 @@ void init() {
     if (initialized)
         return;
     const wchar_t* const pdbPath = LR"(./bedrock_server.pdb)";
-    MemoryFile pdbFile = MemoryFile::Open(pdbPath);
+    MemoryFile           pdbFile = MemoryFile::Open(pdbPath);
     if (!pdbFile.baseAddress) {
         Error("bedrock_server.pdb not found");
         return;
@@ -139,7 +142,7 @@ void init() {
     initFastDlsym(rawPdbFile, dbiStream);
     initReverseLookup();
     imageBaseAddr = (uintptr_t)GetModuleHandle(nullptr);
-    initialized = true;
+    initialized   = true;
 }
 
 [[maybe_unused]] void* pl_resolve_symbol(const char* symbolName) {
@@ -162,22 +165,22 @@ void init() {
 [[maybe_unused]] void pl_lookup_symbol(void* func, size_t* resultLenght, const char*** result) {
     if (!rvaMap) {
         *resultLenght = 0;
-        *result = nullptr;
+        *result       = nullptr;
         return;
     }
-    auto funcAddr = reinterpret_cast<uintptr_t>(func);
-    int rva = static_cast<int>(funcAddr - imageBaseAddr);
-    auto const iter = rvaMap->equal_range(rva);
+    auto                funcAddr = reinterpret_cast<uintptr_t>(func);
+    int                 rva      = static_cast<int>(funcAddr - imageBaseAddr);
+    auto const          iter     = rvaMap->equal_range(rva);
     std::vector<string> vec;
     for (auto it = iter.first; it != iter.second; ++it) {
         vec.push_back(*it->second);
     }
     size_t length = vec.size();
     *resultLenght = length;
-    *result = new const char*[length + 1];
+    *result       = new const char*[length + 1];
     for (int i = 0; i < vec.size(); i++) {
-        size_t strSize = vec[i].size() + 1;
-        const char* str = new char[strSize];
+        size_t      strSize = vec[i].size() + 1;
+        const char* str     = new char[strSize];
         memcpy((void*)str, vec[i].c_str(), strSize);
         (*result)[i] = str;
     }
@@ -193,5 +196,7 @@ void init() {
 
 } // namespace pl::symbol_provider
 
-// TODO: for compability, wait for delete
-PLCAPI void* dlsym_real(const char* symbol) { return pl::symbol_provider::pl_resolve_symbol(symbol); }
+// TODO: for compatibility, wait for delete
+PLCAPI void* dlsym_real(const char* symbol) {
+    return pl::symbol_provider::pl_resolve_symbol(symbol);
+}
