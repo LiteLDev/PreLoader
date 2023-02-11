@@ -2,48 +2,48 @@
 #ifndef FMT_HEADER_ONLY
 #define FMT_HEADER_ONLY
 #endif
-#include <filesystem>
 #include <fmt/chrono.h>
 #include <fmt/color.h>
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <fmt/os.h>
+#include <nlohmann/json.hpp>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <nlohmann/json.hpp>
 #include <string>
 
-inline bool ColorLog;
+inline bool shouldLogColor;
 
-inline void LoadConfigFromJson(const std::string& fileName) {
+inline void loadConfigFromJson(const std::string& fileName) {
     std::ifstream file(fileName);
     if (!file.is_open()) {
-        ColorLog = true;
+        shouldLogColor = true;
         return;
     }
     nlohmann::json json;
     file >> json;
     file.close();
     if (json.find("ColorLog") != json.end()) {
-        const nlohmann::json& out = json.at("ColorLog");
-        out.get_to(ColorLog);
+        shouldLogColor = json["ColorLog"];
+    } else {
+        shouldLogColor = true;
     }
 }
 
 inline void loadLoggerConfig() {
     if (std::filesystem::exists("plugins/LiteLoader/LiteLoader.json")) {
         try {
-            LoadConfigFromJson("plugins/LiteLoader/LiteLoader.json");
+            loadConfigFromJson("plugins/LiteLoader/LiteLoader.json");
         } catch (std::exception& e) {
-            ColorLog = true;
+            shouldLogColor = true;
         } catch (...) {
-            ColorLog = true;
+            shouldLogColor = true;
         }
     } else {
-        ColorLog = true;
+        shouldLogColor = true;
     }
 }
-
 
 #define COLOR_TIME fmt::color::light_blue
 #define COLOR_INFO_PREFIX fmt::color::light_sea_green
@@ -54,9 +54,9 @@ inline void loadLoggerConfig() {
 #define COLOR_ERROR_TEXT fmt::terminal_color::red
 
 #define LOG_PREFIX(prefix, color1, color2)                                                                             \
-    fmt::print(ColorLog ? fmt::fg(color1) : fmt::text_style(),                                                         \
+    fmt::print(shouldLogColor ? fmt::fg(color1) : fmt::text_style(),                                                   \
                fmt::format("{:%H:%M:%S}", fmt::localtime(_time64(0))));                                                \
-    fmt::print(ColorLog ? fmt::fg(color2) : fmt::text_style(), fmt::format(prefix, fmt::localtime(_time64(0))));
+    fmt::print(shouldLogColor ? fmt::fg(color2) : fmt::text_style(), fmt::format(prefix, fmt::localtime(_time64(0))));
 #define LOG(color1, color2, prefix)                                                                                    \
     LOG_PREFIX(prefix, color1, color2);                                                                                \
     std::string str = fmt::format("[PreLoader] ", fmt::localtime(_time64(0)));                                         \

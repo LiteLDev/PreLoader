@@ -1,28 +1,6 @@
-#include "utils.h"
-
-#include <filesystem>
+#include "pl/utils/StringUtils.h"
 
 #include <Windows.h>
-
-#include <Psapi.h>
-
-std::string pl::utils::GetCallerModuleFileName(unsigned long FramesToSkip) {
-    static const int maxFrameCount = 1;
-    void* frames[maxFrameCount];
-    int frameCount = CaptureStackBackTrace(FramesToSkip + 2, maxFrameCount, frames, nullptr);
-
-    HANDLE hProcess = GetCurrentProcess();
-
-    if (0 < frameCount) {
-        HMODULE hModule;
-        GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                          (LPCWSTR)frames[0], &hModule);
-        wchar_t buf[MAX_PATH] = {0};
-        GetModuleFileNameEx(GetCurrentProcess(), hModule, buf, MAX_PATH);
-        return std::filesystem::path(buf).filename().u8string();
-    }
-    return "Unknown";
-}
 
 std::wstring pl::utils::str2wstr(const std::string& str, UINT codePage) {
     auto len = MultiByteToWideChar(codePage, 0, str.c_str(), -1, nullptr, 0);

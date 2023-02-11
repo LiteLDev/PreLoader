@@ -1,14 +1,14 @@
-﻿#include "preloader.h"
+﻿#include "pl/PreLoader.h"
 
 #include <filesystem>
 #include <set>
 #include <string>
 
-#include "logger.h"
-#include "utils.h"
+#include "pl/SymbolProvider.h"
+#include "pl/utils/Logger.h"
+#include "pl/utils/StringUtils.h"
 
-#include <windows.h>
-
+#include <Windows.h>
 
 using namespace pl::utils;
 using namespace std::filesystem;
@@ -121,9 +121,31 @@ void setup() {
     }
 }
 
-void Init() {
+void init() {
     loadLoggerConfig();
     addLibraryToPath();
+    pl::symbol_provider::init();
     setup();
 }
 } // namespace pl
+
+
+[[maybe_unused]] BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
+    if (ul_reason_for_call != DLL_PROCESS_ATTACH)
+        return TRUE;
+
+    // Changing code page to UTF-8
+    // not using SetConsoleOutputCP here, avoid color output broken
+    system("chcp 65001 > nul");
+
+    // For #683, Change CWD to current module path
+    auto buffer = new wchar_t[MAX_PATH];
+    GetModuleFileNameW(hModule, buffer, MAX_PATH);
+    std::wstring path(buffer);
+    auto cwd = path.substr(0, path.find_last_of('\\'));
+    SetCurrentDirectoryW(cwd.c_str());
+    SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOALIGNMENTFAULTEXCEPT);
+
+    pl::init();
+    return TRUE;
+}
