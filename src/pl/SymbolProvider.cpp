@@ -195,8 +195,3 @@ void init() {
 }
 
 } // namespace pl::symbol_provider
-
-// TODO: for compatibility, wait for delete
-PLCAPI void* dlsym_real(const char* symbol) {
-    return pl::symbol_provider::pl_resolve_symbol(symbol);
-}
