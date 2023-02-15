@@ -11,7 +11,10 @@ project(PreLoader)
 
 set(CMAKE_CXX_STANDARD 17)
 
-aux_source_directory(${PROJECT_SOURCE_DIR}/src PROJECT_SRC)
+file(
+        GLOB_RECURSE PROJECT_SRC
+        ${PROJECT_SOURCE_DIR}/src/*.cpp
+)
 
 add_library(PreLoader SHARED ${PROJECT_SRC})
 
@@ -25,7 +28,12 @@ target_include_directories(
         ${Demangler_SOURCE_DIR}/include/
 )
 
-target_compile_definitions(PreLoader PRIVATE NDEBUG _WINDOWS _USRDLL _WINDLL _UNICODE UNICODE _AMD64_ WIN32_LEAN_AND_MEAN NOMINMAX)
+target_include_directories(
+        PreLoader PUBLIC
+        ${PROJECT_SOURCE_DIR}/include/
+)
+
+target_compile_definitions(PreLoader PRIVATE NDEBUG _WINDOWS _USRDLL _WINDLL _UNICODE UNICODE _AMD64_ WIN32_LEAN_AND_MEAN NOMINMAX PRELOADER_EXPORT)
 
 target_compile_options(
         PreLoader PRIVATE

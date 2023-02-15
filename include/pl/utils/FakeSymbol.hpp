@@ -49,70 +49,66 @@ inline static llvm::ms_demangle::SpecialIntrinsicKind consumeSpecialIntrinsicKin
 inline static std::optional<std::string> getFakeSymbol(const std::string& fn) {
     using namespace llvm::ms_demangle;
     using namespace llvm;
-    Demangler Demangler;
-    StringView Name(fn.c_str());
+    Demangler  demangler;
+    StringView name(fn.c_str());
 
-    if (!Name.startsWith('?'))
+    if (!name.consumeFront('?'))
         return std::nullopt;
 
-    Name.consumeFront('?');
+    SpecialIntrinsicKind specialIntrinsicKind = consumeSpecialIntrinsicKind(name);
 
-    SpecialIntrinsicKind SIK = consumeSpecialIntrinsicKind(Name);
-
-    if (SIK != SpecialIntrinsicKind::None)
+    if (specialIntrinsicKind != SpecialIntrinsicKind::None)
         return std::nullopt;
 
-    SymbolNode* DemangledName = Demangler.demangleDeclarator(Name);
-    if (DemangledName == nullptr ||
-        (DemangledName->kind() != NodeKind::FunctionSymbol && DemangledName->kind() != NodeKind::VariableSymbol) ||
-        Demangler.Error)
+    SymbolNode* symbolNode = demangler.demangleDeclarator(name);
+    if (symbolNode == nullptr
+        || (symbolNode->kind() != NodeKind::FunctionSymbol && symbolNode->kind() != NodeKind::VariableSymbol)
+        || demangler.Error)
         return std::nullopt;
 
-    if (DemangledName->kind() == NodeKind::FunctionSymbol) {
-        auto& FunctionClass = ((FunctionSymbolNode*)DemangledName)->Signature->FunctionClass;
-        bool modified = false;
-        size_t originalSize = FunctionClass.toString().size();
-        if (FunctionClass.has(FC_Virtual)) {
-            FunctionClass.remove(FC_Virtual);
+    if (symbolNode->kind() == NodeKind::FunctionSymbol) {
+        auto&  funcNode     = reinterpret_cast<FunctionSymbolNode*>(symbolNode)->Signature->FunctionClass;
+        bool   modified     = false;
+        size_t funcNodeSize = funcNode.toString().size();
+        if (funcNode.has(FC_Virtual)) {
+            funcNode.remove(FC_Virtual);
             modified = true;
         }
-        if (FunctionClass.has(FC_Protected)) {
-            FunctionClass.remove(FC_Protected);
-            FunctionClass.add(FC_Public);
+        if (funcNode.has(FC_Protected)) {
+            funcNode.remove(FC_Protected);
+            funcNode.add(FC_Public);
             modified = true;
         }
-        if (FunctionClass.has(FC_Private)) {
-            FunctionClass.remove(FC_Private);
-            FunctionClass.add(FC_Public);
+        if (funcNode.has(FC_Private)) {
+            funcNode.remove(FC_Private);
+            funcNode.add(FC_Public);
             modified = true;
         }
         if (modified) {
-            std::string FakeSymbol = fn;
-            std::string FakeFunctionClass = FunctionClass.toString();
-            size_t BeginPos = fn.size() - FunctionClass.pos->size();
-            FakeSymbol.erase(BeginPos, originalSize);
-            FakeSymbol.insert(BeginPos, FakeFunctionClass);
-            return FakeSymbol;
+            std::string fakeSymbol   = fn;
+            std::string fakeFuncNode = funcNode.toString();
+            size_t      offset       = fn.size() - funcNode.pos->size();
+            fakeSymbol.erase(offset, funcNodeSize);
+            fakeSymbol.insert(offset, fakeFuncNode);
+            return fakeSymbol;
         }
-    }
-
-    if (DemangledName->kind() == NodeKind::VariableSymbol) {
-        auto& StorageClass = ((VariableSymbolNode*)DemangledName)->SC;
-        bool modified = false;
-        if (StorageClass == StorageClass::PrivateStatic) {
-            StorageClass.set(StorageClass::PublicStatic);
+    } else if (symbolNode->kind() == NodeKind::VariableSymbol) {
+        auto& storageClass = reinterpret_cast<VariableSymbolNode*>(symbolNode)->SC;
+        bool  modified     = false;
+        if (storageClass == StorageClass::PrivateStatic) {
+            storageClass.set(StorageClass::PublicStatic);
             modified = true;
         }
-        if (StorageClass == StorageClass::ProtectedStatic) {
-            StorageClass.set(StorageClass::PublicStatic);
+        if (storageClass == StorageClass::ProtectedStatic) {
+            storageClass.set(StorageClass::PublicStatic);
             modified = true;
         }
         if (modified) {
-            std::string FakeSymbol = fn;
-            char FakeStorageClass = StorageClass.toChar();
-            size_t BeginPos = fn.size() - StorageClass.pos->size();
-            FakeSymbol[BeginPos] = FakeStorageClass;
-            return FakeSymbol;
+            std::string fakeSymbol       = fn;
+            char        fakeStorageClass = storageClass.toChar();
+            size_t      offset           = fn.size() - storageClass.pos->size();
+            fakeSymbol[offset]           = fakeStorageClass;
+            return fakeSymbol;
         }
     }
 
