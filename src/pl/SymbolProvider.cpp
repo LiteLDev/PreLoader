@@ -147,24 +147,22 @@ void init() {
 
 [[maybe_unused]] void* pl_resolve_symbol(const char* symbolName) {
     static_assert(sizeof(HMODULE) == 8);
-    dlsymLock.lock();
+    std::lock_guard lock(dlsymLock);
     if (!fastDlsymState)
         return nullptr;
     auto iter = funcMap->find(string(symbolName));
     if (iter != funcMap->end()) {
-        dlsymLock.unlock();
         return (void*)(imageBaseAddr + iter->second);
     } else {
         Error("Could not find function in memory: {}", symbolName);
         Error("Plugin: {}", pl::utils::GetCallerModuleFileName());
     }
-    dlsymLock.unlock();
     return nullptr;
 }
 
-[[maybe_unused]] void pl_lookup_symbol(void* func, size_t* resultLenght, const char*** result) {
+[[maybe_unused]] void pl_lookup_symbol(void* func, size_t* resultLength, const char*** result) {
     if (!rvaMap) {
-        *resultLenght = 0;
+        *resultLength = 0;
         *result       = nullptr;
         return;
     }
@@ -176,7 +174,7 @@ void init() {
         vec.push_back(*it->second);
     }
     size_t length = vec.size();
-    *resultLenght = length;
+    *resultLength = length;
     *result       = new const char*[length + 1];
     for (int i = 0; i < vec.size(); i++) {
         size_t      strSize = vec[i].size() + 1;
