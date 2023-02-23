@@ -36,6 +36,7 @@ struct HookData {
     inline ~HookData() {
         if (this->thunk != nullptr) {
             VirtualFree(this->thunk, 0, MEM_RELEASE);
+            this->thunk = nullptr;
         }
     }
 
@@ -64,12 +65,6 @@ struct HookData {
 std::unordered_map<FuncPtr, std::shared_ptr<HookData>> hooks{};
 
 std::mutex hooksMutex{};
-
-struct AutoUnlock {
-    ~AutoUnlock() {
-        hooksMutex.unlock();
-    }
-};
 
 FuncPtr createThunk(FuncPtr* target) {
     constexpr auto THUNK_SIZE            = 18;
@@ -105,9 +100,8 @@ int processHook(FuncPtr target, FuncPtr detour, FuncPtr* originalFunc) {
 }
 
 [[maybe_unused]] int pl_hook(FuncPtr target, FuncPtr detour, FuncPtr* originalFunc, Priority priority) {
-    hooksMutex.lock();
-    AutoUnlock unlock;
-    auto       it = hooks.find(target);
+    std::lock_guard lock(hooksMutex);
+    auto            it = hooks.find(target);
     if (it != hooks.end()) {
         auto hookData = it->second;
         hookData->hooks.insert({detour, originalFunc, priority, hookData->incrementHookId()});
@@ -129,9 +123,8 @@ int processHook(FuncPtr target, FuncPtr detour, FuncPtr* originalFunc) {
 }
 
 [[maybe_unused]] bool pl_unhook(FuncPtr target, FuncPtr detour) {
-    hooksMutex.lock();
-    AutoUnlock unlock;
-    auto       hookDataIter = hooks.find(target);
+    std::lock_guard lock(hooksMutex);
+    auto            hookDataIter = hooks.find(target);
     if (hookDataIter == hooks.end()) {
         return false;
     }
