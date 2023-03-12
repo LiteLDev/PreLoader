@@ -8,7 +8,7 @@
 
 #include <Windows.h>
 
-#include <detours.h>
+#include <detours/detours.h>
 
 namespace pl::hook {
 

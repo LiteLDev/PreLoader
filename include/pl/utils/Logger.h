@@ -62,7 +62,7 @@ inline void loadLoggerConfig() {
 #define LOG(color1, color2, prefix)                                                                                    \
     LOG_PREFIX(prefix, color1, color2);                                                                                \
     std::string str = fmt::format("[PreLoader] ", fmt::localtime(_time64(0)));                                         \
-    str             += fmt::format(formatStr, args...);                                                                \
+    str             += fmt::format(fmt::runtime(formatStr), args...);                                                  \
     str.append(1, '\n');
 
 template <typename... Args>
