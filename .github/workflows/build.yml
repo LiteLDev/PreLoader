@@ -78,10 +78,15 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@v3
 
+      - uses: edgarrc/action-7z@v1
+        with:
+          args: 7z a -tzip preloader-${{ env.VERSION }}-windows-amd64.zip preloader-${{ env.VERSION }}-windows-amd64
+
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v1
         with:
           files: |
+            preloader-${{ env.VERSION }}-windows-amd64.zip
             preloader-${{ env.VERSION }}-windows-amd64/PreLoader.dll
             preloader-${{ env.VERSION }}-windows-amd64/PreLoader.lib
             preloader-${{ env.VERSION }}-windows-amd64/PreLoader.pdb
