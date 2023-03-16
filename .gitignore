@@ -5,7 +5,6 @@
 
 # Visual Studio Code related
 /.vscode
-/build
 
 # Idea related
 /.idea
@@ -13,3 +12,8 @@
 
 # Clangd cache
 /.cache
+
+# XMake
+/.xmake
+/build
+/CMakeLists.txt

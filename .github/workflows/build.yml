@@ -2,10 +2,21 @@ name: Build
 
 on:
   push:
+    paths:
+      - '**.cpp'
+      - '**.cc'
+      - '**.cxx'
+      - '**.c'
+      - '**.hpp'
+      - '**.hh'
+      - '**.hxx'
+      - '**.h'
+      - '.github/workflows/build.yml'
+      - '**/xmake.lua'
   pull_request:
   release:
-    types: 
-      - released
+    types:
+      - created
   workflow_dispatch:
 
 jobs:
@@ -13,41 +24,54 @@ jobs:
     name: Build
     runs-on: windows-latest
     steps:
-      - name: Get version if release
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup XMake
+        uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: latest
+          actions-cache-folder: ".xmake-cache"
+
+      - name: Get version from tag if release
         if: github.event_name == 'release'
         run: echo "VERSION=${{ github.ref_name }}" | sed 's/=v/=/' >> $env:GITHUB_ENV
 
-      - name: Set default version if not release
-        if: github.event_name != 'release'
-        run: echo "VERSION=0.0.0" >> $env:GITHUB_ENV
-
-      - name: Checkout the repository
-        uses: actions/checkout@v3
+      - name: "Get Previous tag if not release"
+        id: previoustag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
         with:
-          submodules: true
+          fallback: 0.0.0
+
+      - name: Set pseudo version if not release
+        if: github.event_name != 'release'
+        run: |
+            $date = (Get-Date -Format "yyyyMMddHHmmss")
+            $commit = git rev-parse --short HEAD
+            $previous_tag = "${{ steps.previoustag.outputs.tag }}"
+            echo "VERSION=$previous_tag-$date-$commit" >> $env:GITHUB_ENV
 
       - name: Build PreLoader
         run: |
-          mkdir -p build
-          cd build
-          cmake ..
-          cmake --build . --config Release -j
+          xmake f -p windows -m release -a x64 -y
+          xmake -w -y
 
       - name: Upload build
         uses: actions/upload-artifact@v3
         with:
           name: preloader-${{ env.VERSION }}-windows-amd64
-          path: build/Release/PreLoader.dll
+          path: build/windows/x64/release/PreLoader.dll
 
       - name: Upload PDB file
         uses: actions/upload-artifact@v3
         with:
           name: preloader-${{ env.VERSION }}-windows-amd64-pdb
-          path: build/Release/PreLoader.pdb
+          path: build/windows/x64/release/PreLoader.pdb
 
   upload-to-release:
     name: Upload to release
-    needs: 
+    needs:
       - build
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
@@ -57,7 +81,7 @@ jobs:
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
-          
+
       - name: Upload release assets
         uses: softprops/action-gh-release@v1
         with:
