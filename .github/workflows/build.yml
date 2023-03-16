@@ -33,6 +33,14 @@ jobs:
         with:
           xmake-version: latest
 
+      - name: Cache XMake
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/AppData/Local/.xmake
+            ./.xmake
+          key: ${{ runner.os }}-xmake-${{ hashFiles('**/xmake.lua') }}
+
       - name: Get Release Version Tag
         if: github.event_name == 'release'
         run: echo "VERSION=${{ github.ref_name }}" | sed 's/=v/=/' >> $env:GITHUB_ENV
