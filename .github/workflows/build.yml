@@ -32,7 +32,6 @@ jobs:
         uses: xmake-io/github-action-setup-xmake@v1
         with:
           xmake-version: latest
-          actions-cache-folder: ".xmake-cache"
 
       - name: Get version from tag if release
         if: github.event_name == 'release'
