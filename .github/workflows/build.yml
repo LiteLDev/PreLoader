@@ -69,6 +69,7 @@ jobs:
         with:
           name: preloader-${{ env.VERSION }}-windows-amd64
           path: |
+            include
             build/windows/x64/release/PreLoader.dll
             build/windows/x64/release/PreLoader.lib
             build/windows/x64/release/PreLoader.pdb
@@ -85,6 +86,10 @@ jobs:
 
       - name: Download Artifacts
         uses: actions/download-artifact@v3
+
+      - name: Add Headers
+        run: |
+          mv include preloader-${{ env.VERSION }}-windows-amd64/
 
       - uses: edgarrc/action-7z@v1
         with:
