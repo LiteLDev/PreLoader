@@ -46,6 +46,7 @@ jobs:
         run: echo "VERSION=${{ github.ref_name }}" | sed 's/=v/=/' >> $env:GITHUB_ENV
 
       - name: Get Previous Tag
+        if: github.event_name != 'release'
         id: previoustag
         uses: "WyriHaximus/github-action-get-previous-tag@v1"
         with:
@@ -71,6 +72,9 @@ jobs:
           cp build/windows/x64/release/PreLoader.lib artifacts
           cp build/windows/x64/release/PreLoader.pdb artifacts
           cp -r include artifacts
+          mv artifacts preloader-${{ env.VERSION }}-windows-amd64
+          mkdir artifacts
+          mv preloader-${{ env.VERSION }}-windows-amd64 artifacts/
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
