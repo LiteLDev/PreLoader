@@ -97,7 +97,7 @@ jobs:
 
       - uses: edgarrc/action-7z@v1
         with:
-          args: 7z a -tzip preloader-${{ env.VERSION }}-windows-amd64.zip preloader-${{ env.VERSION }}-windows-amd64/preloader-${{ env.VERSION }}-windows-amd64
+          args: 7z a -tzip preloader-${{ env.VERSION }}-windows-amd64.zip ./preloader-${{ env.VERSION }}-windows-amd64/preloader-${{ env.VERSION }}-windows-amd64
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v1
