@@ -43,14 +43,14 @@ jobs:
 
       - name: Get Release Version Tag
         if: github.event_name == 'release'
-        run: echo "VERSION=${{ github.ref_name }}" | sed 's/=v/=/' >> $env:GITHUB_ENV
+        run: echo "VERSION=${{ github.ref_name }}" >> $env:GITHUB_ENV
 
       - name: Get Previous Tag
         if: github.event_name != 'release'
         id: previoustag
         uses: "WyriHaximus/github-action-get-previous-tag@v1"
         with:
-          fallback: 0.0.0
+          fallback: "v0.0.0"
 
       - name: Set Pseudo Version
         if: github.event_name != 'release'
@@ -90,7 +90,7 @@ jobs:
     if: github.event_name == 'release'
     steps:
       - name: Get Version
-        run: echo "VERSION=${{ github.ref_name }}" | sed 's/=v/=/' >> $GITHUB_ENV
+        run: echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
 
       - name: Download Artifacts
         uses: actions/download-artifact@v3
