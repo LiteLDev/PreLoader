@@ -2,7 +2,7 @@
 
 #include <set>
 
-#include "pl/utils/Macro.h"
+#include "pl/internal/Macro.h"
 
 namespace pl::hook {
 

@@ -1,13 +1,11 @@
-#pragma once
+#include "pl/internal/FakeSymbol.hpp"
 
-#include <optional>
-#include <string>
 
 #include <demangler/MicrosoftDemangle.h>
 
 namespace pl::fake_symbol {
 
-inline static llvm::ms_demangle::SpecialIntrinsicKind consumeSpecialIntrinsicKind(StringView& MangledName) {
+inline llvm::ms_demangle::SpecialIntrinsicKind consumeSpecialIntrinsicKind(StringView& MangledName) {
     using namespace llvm::ms_demangle;
     using namespace llvm;
     if (MangledName.consumeFront("?_7"))
@@ -46,7 +44,7 @@ inline static llvm::ms_demangle::SpecialIntrinsicKind consumeSpecialIntrinsicKin
 }
 
 // generate fakeSymbol for virtual functions
-inline static std::optional<std::string> getFakeSymbol(const std::string& fn) {
+std::optional<std::string> getFakeSymbol(const std::string& fn) {
     using namespace llvm::ms_demangle;
     using namespace llvm;
     Demangler  demangler;

@@ -11,12 +11,12 @@
 
 #include <parallel_hashmap/phmap.h>
 
-#include "pl/utils/ApHash.h"
-#include "pl/utils/FakeSymbol.hpp"
-#include "pl/utils/Logger.h"
-#include "pl/utils/MemoryFile.h"
-#include "pl/utils/PdbUtils.h"
-#include "pl/utils/WindowsUtils.h"
+#include "pl/internal/ApHash.h"
+#include "pl/internal/FakeSymbol.hpp"
+#include "pl/internal/Logger.h"
+#include "pl/internal/MemoryFile.h"
+#include "pl/internal/PdbUtils.h"
+#include "pl/internal/WindowsUtils.h"
 
 #include <Windows.h>
 

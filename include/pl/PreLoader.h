@@ -1,7 +1,5 @@
 #pragma once
 
-#include "pl/utils/Macro.h"
-
-namespace pl {
-void init();
-}
+#include "pl/internal/Macro.h"
+#include "pl/SymbolProvider.h"
+#include "pl/Hook.h"

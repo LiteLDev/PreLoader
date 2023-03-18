@@ -1,4 +1,4 @@
-#include "pl/utils/StringUtils.h"
+#include "pl/internal/StringUtils.h"
 
 #include <Windows.h>
 

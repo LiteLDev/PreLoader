@@ -4,9 +4,8 @@
 #include <set>
 #include <string>
 
-#include "pl/SymbolProvider.h"
-#include "pl/utils/Logger.h"
-#include "pl/utils/StringUtils.h"
+#include "pl/internal/Logger.h"
+#include "pl/internal/StringUtils.h"
 
 #include <Windows.h>
 

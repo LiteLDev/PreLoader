@@ -1,6 +1,6 @@
 #pragma once
 
-#include "pl/utils/Macro.h"
+#include "pl/internal/Macro.h"
 
 namespace pl::symbol_provider {
 
