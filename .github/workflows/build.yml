@@ -41,15 +41,6 @@ jobs:
             ./.xmake
           key: ${{ runner.os }}-xmake-${{ hashFiles('**/xmake.lua') }}
 
-      - name: Cache Build
-        uses: actions/cache@v3
-        with:
-          path: |
-            build
-          key: ${{ runner.os }}-build-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-build-
-
       - name: Get Release Version Tag
         if: github.event_name == 'release'
         run: echo "VERSION=${{ github.ref_name }}" >> $env:GITHUB_ENV
@@ -71,7 +62,7 @@ jobs:
 
       - name: Build PreLoader
         run: |
-          xmake f -p windows -m release -a x64 -y
+          xmake f -p windows -m release -a x64 --ccache=n -y
           xmake -w -y
 
       - name: Prepare Artifacts
