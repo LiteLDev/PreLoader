@@ -62,7 +62,7 @@ jobs:
 
       - name: Build PreLoader
         run: |
-          xmake f -p windows -m release -a x64 -y
+          xmake f -p windows -m release -a x64 --ccache=n -y
           xmake -w -y
 
       - name: Prepare Artifacts
