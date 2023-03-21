@@ -101,6 +101,10 @@ jobs:
           mv preloader-${{ env.VERSION }}-windows-amd64 artifacts
           mv artifacts/preloader-${{ env.VERSION }}-windows-amd64 .
           zip -r preloader-${{ env.VERSION }}-windows-amd64.zip preloader-${{ env.VERSION }}-windows-amd64
+          echo "ZIP_SHA256=$(sha256sum preloader-${{ env.VERSION }}-windows-amd64.zip | cut -d ' ' -f 1)" >> $GITHUB_ENV
+          echo "DLL_SHA256=$(sha256sum preloader-${{ env.VERSION }}-windows-amd64/PreLoader.dll | cut -d ' ' -f 1)" >> $GITHUB_ENV
+          echo "LIB_SHA256=$(sha256sum preloader-${{ env.VERSION }}-windows-amd64/PreLoader.lib | cut -d ' ' -f 1)" >> $GITHUB_ENV
+          echo "PDB_SHA256=$(sha256sum preloader-${{ env.VERSION }}-windows-amd64/PreLoader.pdb | cut -d ' ' -f 1)" >> $GITHUB_ENV
         shell: bash
 
       - name: Upload Release Assets
@@ -111,3 +115,10 @@ jobs:
             preloader-${{ env.VERSION }}-windows-amd64/PreLoader.dll
             preloader-${{ env.VERSION }}-windows-amd64/PreLoader.lib
             preloader-${{ env.VERSION }}-windows-amd64/PreLoader.pdb
+          body: |
+            | File                                           | SHA256                |
+            | :--------------------------------------------- | :-------------------- |
+            | preloader-${{ env.VERSION }}-windows-amd64.zip | ${{ env.ZIP_SHA256 }} |
+            | PreLoader.dll                                  | ${{ env.DLL_SHA256 }} |
+            | PreLoader.lib                                  | ${{ env.LIB_SHA256 }} |
+            | PreLoader.pdb                                  | ${{ env.PDB_SHA256 }} |
