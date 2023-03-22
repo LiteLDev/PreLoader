@@ -39,7 +39,12 @@ jobs:
           path: |
             ~/AppData/Local/.xmake
             ./.xmake
-          key: ${{ runner.os }}-xmake-${{ hashFiles('**/xmake.lua') }}
+          key: ${{ runner.os }}-xmake-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-xmake-
+
+      - name: Update XMake Repository
+        run: xmake repo -u
 
       - name: Get Release Version Tag
         if: github.event_name == 'release'
