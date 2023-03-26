@@ -5,9 +5,9 @@
 
 namespace pl::fake_symbol {
 
-inline llvm::ms_demangle::SpecialIntrinsicKind consumeSpecialIntrinsicKind(StringView& MangledName) {
-    using namespace llvm::ms_demangle;
-    using namespace llvm;
+inline demangler::ms_demangle::SpecialIntrinsicKind consumeSpecialIntrinsicKind(StringView& MangledName) {
+    using namespace demangler::ms_demangle;
+    using namespace demangler;
     if (MangledName.consumeFront("?_7"))
         return SpecialIntrinsicKind::Vftable;
     if (MangledName.consumeFront("?_8"))
@@ -45,8 +45,8 @@ inline llvm::ms_demangle::SpecialIntrinsicKind consumeSpecialIntrinsicKind(Strin
 
 // generate fakeSymbol for virtual functions
 std::optional<std::string> getFakeSymbol(const std::string& fn) {
-    using namespace llvm::ms_demangle;
-    using namespace llvm;
+    using namespace demangler::ms_demangle;
+    using namespace demangler;
     Demangler  demangler;
     StringView name(fn.c_str());
 

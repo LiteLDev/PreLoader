@@ -16,7 +16,7 @@ add_requires("nlohmann_json v3.11.2")
 add_requires("parallel-hashmap 1.35")
 
 add_requires("detours v4.0.1-xmake.1")
-add_requires("demangler v1.0.2")
+add_requires("demangler v2.0.0")
 
 target("PreLoader")
     set_kind("shared")
