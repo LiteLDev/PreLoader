@@ -7,7 +7,9 @@
 #include "pl/internal/Logger.h"
 #include "pl/internal/StringUtils.h"
 
-#include <Windows.h>
+#include <windows.h>
+
+#include <consoleapi2.h>
 
 using namespace pl::utils;
 using namespace std::filesystem;
@@ -140,9 +142,12 @@ void init() {
     if (ul_reason_for_call != DLL_PROCESS_ATTACH)
         return TRUE;
 
-    // Changing code page to UTF-8
-    // not using SetConsoleOutputCP here, avoid color output broken
-    system("chcp 65001 > nul");
+    SetConsoleCP(CP_UTF8);
+    SetConsoleOutputCP(CP_UTF8);
+
+    DWORD mode;
+    GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &mode);
+    SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 
     // For #683, Change CWD to current module path
     auto buffer = new wchar_t[MAX_PATH];
