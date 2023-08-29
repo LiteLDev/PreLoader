@@ -44,7 +44,7 @@ inline demangler::ms_demangle::SpecialIntrinsicKind consumeSpecialIntrinsicKind(
 }
 
 // generate fakeSymbol for virtual functions
-std::optional<std::string> getFakeSymbol(const std::string& fn) {
+std::optional<std::string> getFakeSymbol(const std::string& fn, bool removeVirtual) {
     using namespace demangler::ms_demangle;
     using namespace demangler;
     Demangler  demangler;
@@ -68,9 +68,13 @@ std::optional<std::string> getFakeSymbol(const std::string& fn) {
         auto&  funcNode     = reinterpret_cast<FunctionSymbolNode*>(symbolNode)->Signature->FunctionClass;
         bool   modified     = false;
         size_t funcNodeSize = funcNode.toString().size();
-        if (funcNode.has(FC_Virtual)) {
-            funcNode.remove(FC_Virtual);
-            modified = true;
+        if (removeVirtual) {
+            if (funcNode.has(FC_Virtual)) {
+                funcNode.remove(FC_Virtual);
+                modified = true;
+            } else {
+                return std::nullopt;
+            }
         }
         if (funcNode.has(FC_Protected)) {
             funcNode.remove(FC_Protected);

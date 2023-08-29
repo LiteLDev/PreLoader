@@ -72,6 +72,11 @@ void initFastDlsym(const PDB::RawFile& rawPdbFile, const PDB::DBIStream& dbiStre
         auto fake = pl::fake_symbol::getFakeSymbol(record->data.S_PUB32.name);
         if (fake.has_value())
             funcMap->emplace(fake.value(), rva);
+
+        // MCVAPI
+        fake = pl::fake_symbol::getFakeSymbol(record->data.S_PUB32.name, true);
+        if (fake.has_value())
+            funcMap->emplace(fake.value(), rva);
     }
 
     const PDB::ModuleInfoStream moduleInfoStream = dbiStream.CreateModuleInfoStream(rawPdbFile);
