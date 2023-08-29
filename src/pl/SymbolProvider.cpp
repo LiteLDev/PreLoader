@@ -1,3 +1,5 @@
+#include "pl/SymbolProvider.h"
+
 #include <cstdio>
 #include <mutex>
 #include <string_view>
@@ -106,8 +108,6 @@ void initReverseLookup() {
         rvaMap->insert({pair.second, (string*)&pair.first});
     }
 }
-
-#include "pl/SymbolProvider.h"
 
 namespace pl::symbol_provider {
 

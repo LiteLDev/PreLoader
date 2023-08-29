@@ -70,14 +70,12 @@ jobs:
         run: |
           xmake f -p windows -m release -a x64 --ccache=n -y
           xmake -w -y
+          xmake p
 
       - name: Prepare Artifacts
         run: |
           mkdir artifacts
-          cp build/windows/x64/release/PreLoader.dll artifacts
-          cp build/windows/x64/release/PreLoader.lib artifacts
-          cp build/windows/x64/release/PreLoader.pdb artifacts
-          cp -r include artifacts
+          cp -r build/packages/p/preloader/windows/x64/release/* artifacts
           mv artifacts preloader-${{ env.VERSION }}-windows-amd64
           mkdir artifacts
           mv preloader-${{ env.VERSION }}-windows-amd64 artifacts/
@@ -108,9 +106,9 @@ jobs:
           mv artifacts/preloader-${{ env.VERSION }}-windows-amd64 .
           zip -r preloader-${{ env.VERSION }}-windows-amd64.zip preloader-${{ env.VERSION }}-windows-amd64
           echo "ZIP_SHA256=$(sha256sum preloader-${{ env.VERSION }}-windows-amd64.zip | cut -d ' ' -f 1)" >> $GITHUB_ENV
-          echo "DLL_SHA256=$(sha256sum preloader-${{ env.VERSION }}-windows-amd64/PreLoader.dll | cut -d ' ' -f 1)" >> $GITHUB_ENV
-          echo "LIB_SHA256=$(sha256sum preloader-${{ env.VERSION }}-windows-amd64/PreLoader.lib | cut -d ' ' -f 1)" >> $GITHUB_ENV
-          echo "PDB_SHA256=$(sha256sum preloader-${{ env.VERSION }}-windows-amd64/PreLoader.pdb | cut -d ' ' -f 1)" >> $GITHUB_ENV
+          echo "DLL_SHA256=$(sha256sum preloader-${{ env.VERSION }}-windows-amd64/bin/PreLoader.dll | cut -d ' ' -f 1)" >> $GITHUB_ENV
+          echo "PDB_SHA256=$(sha256sum preloader-${{ env.VERSION }}-windows-amd64/bin/PreLoader.pdb | cut -d ' ' -f 1)" >> $GITHUB_ENV
+          echo "LIB_SHA256=$(sha256sum preloader-${{ env.VERSION }}-windows-amd64/lib/PreLoader.lib | cut -d ' ' -f 1)" >> $GITHUB_ENV
         shell: bash
 
       - name: Upload Release Assets
@@ -118,13 +116,13 @@ jobs:
         with:
           files: |
             preloader-${{ env.VERSION }}-windows-amd64.zip
-            preloader-${{ env.VERSION }}-windows-amd64/PreLoader.dll
-            preloader-${{ env.VERSION }}-windows-amd64/PreLoader.lib
-            preloader-${{ env.VERSION }}-windows-amd64/PreLoader.pdb
+            preloader-${{ env.VERSION }}-windows-amd64/bin/PreLoader.dll
+            preloader-${{ env.VERSION }}-windows-amd64/bin/PreLoader.pdb
+            preloader-${{ env.VERSION }}-windows-amd64/lib/PreLoader.lib
           body: |
             | File                                           | SHA256                |
             | :--------------------------------------------- | :-------------------- |
             | preloader-${{ env.VERSION }}-windows-amd64.zip | ${{ env.ZIP_SHA256 }} |
             | PreLoader.dll                                  | ${{ env.DLL_SHA256 }} |
-            | PreLoader.lib                                  | ${{ env.LIB_SHA256 }} |
             | PreLoader.pdb                                  | ${{ env.PDB_SHA256 }} |
+            | PreLoader.lib                                  | ${{ env.LIB_SHA256 }} |
