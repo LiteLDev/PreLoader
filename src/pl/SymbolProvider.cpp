@@ -14,7 +14,7 @@
 #include <parallel_hashmap/phmap.h>
 
 #include "pl/internal/ApHash.h"
-#include "pl/internal/FakeSymbol.hpp"
+#include "pl/internal/FakeSymbol.h"
 #include "pl/internal/Logger.h"
 #include "pl/internal/MemoryFile.h"
 #include "pl/internal/PdbUtils.h"
