@@ -1,5 +1,10 @@
 name: Build
-
+env:
+  VERSION: v0.0.0
+  ZIP_SHA256: ""
+  DLL_SHA256: ""
+  PDB_SHA256: ""
+  LIB_SHA256: ""
 on:
   push:
     paths:
@@ -114,12 +119,14 @@ jobs:
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v1
         with:
+          append_body: true
           files: |
             preloader-${{ env.VERSION }}-windows-amd64.zip
             preloader-${{ env.VERSION }}-windows-amd64/bin/PreLoader.dll
             preloader-${{ env.VERSION }}-windows-amd64/bin/PreLoader.pdb
             preloader-${{ env.VERSION }}-windows-amd64/lib/PreLoader.lib
           body: |
+            ---
             | File                                           | SHA256                |
             | :--------------------------------------------- | :-------------------- |
             | preloader-${{ env.VERSION }}-windows-amd64.zip | ${{ env.ZIP_SHA256 }} |
