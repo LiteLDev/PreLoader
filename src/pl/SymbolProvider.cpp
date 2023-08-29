@@ -1,3 +1,5 @@
+#include "pl/SymbolProvider.h"
+
 #include <cstdio>
 #include <mutex>
 #include <string_view>
@@ -12,7 +14,7 @@
 #include <parallel_hashmap/phmap.h>
 
 #include "pl/internal/ApHash.h"
-#include "pl/internal/FakeSymbol.hpp"
+#include "pl/internal/FakeSymbol.h"
 #include "pl/internal/Logger.h"
 #include "pl/internal/MemoryFile.h"
 #include "pl/internal/PdbUtils.h"
@@ -70,6 +72,11 @@ void initFastDlsym(const PDB::RawFile& rawPdbFile, const PDB::DBIStream& dbiStre
         auto fake = pl::fake_symbol::getFakeSymbol(record->data.S_PUB32.name);
         if (fake.has_value())
             funcMap->emplace(fake.value(), rva);
+
+        // MCVAPI
+        fake = pl::fake_symbol::getFakeSymbol(record->data.S_PUB32.name, true);
+        if (fake.has_value())
+            funcMap->emplace(fake.value(), rva);
     }
 
     const PDB::ModuleInfoStream moduleInfoStream = dbiStream.CreateModuleInfoStream(rawPdbFile);
@@ -106,8 +113,6 @@ void initReverseLookup() {
         rvaMap->insert({pair.second, (string*)&pair.first});
     }
 }
-
-#include "pl/SymbolProvider.h"
 
 namespace pl::symbol_provider {
 

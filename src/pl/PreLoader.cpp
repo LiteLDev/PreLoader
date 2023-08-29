@@ -111,8 +111,6 @@ void setup() {
 
                 if (dllName.empty() || dllName.front() == '#')
                     continue;
-                if (dllName.find("LiteLoader.dll") != std::wstring::npos)
-                    continue;
                 std::cout << "Preload: " << dllName << std::endl;
                 loadLibrary(dllName);
                 preloadList.insert(dllName);
