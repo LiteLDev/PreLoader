@@ -1,16 +1,14 @@
 #pragma once
-#ifndef FMT_HEADER_ONLY
-#define FMT_HEADER_ONLY
-#endif
+
+#include <filesystem>
 #include <fmt/chrono.h>
 #include <fmt/color.h>
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <fmt/os.h>
-#include <nlohmann/json.hpp>
-#include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <nlohmann/json.hpp>
 #include <string>
 
 inline bool shouldLogColor;
@@ -35,11 +33,7 @@ inline void loadLoggerConfig() {
     if (std::filesystem::exists("plugins/LiteLoader/LiteLoader.json")) {
         try {
             loadConfigFromJson("plugins/LiteLoader/LiteLoader.json");
-        } catch (std::exception& e) {
-            shouldLogColor = true;
-        } catch (...) {
-            shouldLogColor = true;
-        }
+        } catch (...) { shouldLogColor = true; }
     } else {
         shouldLogColor = true;
     }
@@ -61,7 +55,7 @@ inline void loadLoggerConfig() {
     fmt::print(shouldLogColor ? fmt::fg(color2) : fmt::text_style(), fmt::format(prefix, fmt::localtime(_time64(0))));
 #define LOG(color1, color2, prefix)                                                                                    \
     LOG_PREFIX(prefix, color1, color2);                                                                                \
-    std::string str = fmt::format("[PreLoader] ", fmt::localtime(_time64(0)));                                         \
+    std::string str  = fmt::format("[PreLoader] ", fmt::localtime(_time64(0)));                                        \
     str             += fmt::format(fmt::runtime(formatStr), args...);                                                  \
     str.append(1, '\n');
 

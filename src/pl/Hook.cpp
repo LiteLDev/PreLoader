@@ -19,8 +19,7 @@ struct HookElement {
     int      id{};
 
     bool operator<(const HookElement& other) const {
-        if (priority != other.priority)
-            return priority < other.priority;
+        if (priority != other.priority) return priority < other.priority;
         return id < other.id;
     }
 };
@@ -51,15 +50,11 @@ struct HookData {
                 last  = item.originalFunc;
             }
         }
-        if (last == nullptr)
-            this->start = this->origin;
-        else
-            *last = this->origin;
+        if (last == nullptr) this->start = this->origin;
+        else *last = this->origin;
     }
 
-    inline int incrementHookId() {
-        return ++hookId;
-    }
+    inline int incrementHookId() { return ++hookId; }
 };
 
 std::unordered_map<FuncPtr, std::shared_ptr<HookData>> hooks{};
@@ -125,13 +120,10 @@ int processHook(FuncPtr target, FuncPtr detour, FuncPtr* originalFunc) {
 [[maybe_unused]] bool pl_unhook(FuncPtr target, FuncPtr detour) {
     std::lock_guard lock(hooksMutex);
     auto            hookDataIter = hooks.find(target);
-    if (hookDataIter == hooks.end()) {
-        return false;
-    }
+    if (hookDataIter == hooks.end()) { return false; }
     auto& hookData = hookDataIter->second;
     for (auto it = hookData->hooks.begin(); it != hookData->hooks.end(); ++it) {
-        if (it->detour != detour)
-            continue;
+        if (it->detour != detour) continue;
         hookData->hooks.erase(it);
         hookData->updateCallList();
         return true;

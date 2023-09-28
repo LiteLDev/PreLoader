@@ -42,14 +42,10 @@ inline bool handleError(PDB::ErrorCode errorCode) {
 }
 
 inline bool checkValidDBIStreams(const PDB::RawFile& rawPdbFile, const PDB::DBIStream& dbiStream) {
-    if (handleError(dbiStream.HasValidImageSectionStream(rawPdbFile)))
-        return false;
-    if (handleError(dbiStream.HasValidPublicSymbolStream(rawPdbFile)))
-        return false;
-    if (handleError(dbiStream.HasValidGlobalSymbolStream(rawPdbFile)))
-        return false;
-    if (handleError(dbiStream.HasValidSectionContributionStream(rawPdbFile)))
-        return false;
+    if (handleError(dbiStream.HasValidImageSectionStream(rawPdbFile))) return false;
+    if (handleError(dbiStream.HasValidPublicSymbolStream(rawPdbFile))) return false;
+    if (handleError(dbiStream.HasValidGlobalSymbolStream(rawPdbFile))) return false;
+    if (handleError(dbiStream.HasValidSectionContributionStream(rawPdbFile))) return false;
     return true;
 }
 } // namespace pl::utils

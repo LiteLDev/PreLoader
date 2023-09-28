@@ -23,15 +23,16 @@ AlignConsecutiveBitFields:
   Enabled: true
   AcrossEmptyLines: false
   AcrossComments: false
-AllowShortEnumsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: Empty
 AllowShortLambdasOnASingleLine: All
+AllowShortBlocksOnASingleLine: Always
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortLoopsOnASingleLine: true
 AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakTemplateDeclarations: 'Yes'
 BinPackArguments: false
 BinPackParameters: false
 BreakBeforeBraces: Custom
-BreakBeforeBinaryOperators: All
+BreakBeforeBinaryOperators: NonAssignment
 ColumnLimit: 120
 CommentPragmas: '^ IWYU pragma:'
 ConstructorInitializerIndentWidth: 0
@@ -42,4 +43,4 @@ PackConstructorInitializers: CurrentLine
 PointerAlignment: Left
 TabWidth: 4
 UseTab: Never
-SortIncludes: Never
+SortIncludes: CaseSensitive

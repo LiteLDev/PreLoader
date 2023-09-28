@@ -11,9 +11,7 @@ std::wstring pl::utils::str2wstr(const std::string& str, UINT codePage) {
     return result;
 }
 
-std::wstring pl::utils::str2wstr(const std::string& str) {
-    return str2wstr(str, CP_UTF8);
-}
+std::wstring pl::utils::str2wstr(const std::string& str) { return str2wstr(str, CP_UTF8); }
 
 std::string pl::utils::wstr2str(const std::wstring& wstr) {
     auto  len    = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, nullptr);

@@ -43,9 +43,7 @@ void testFuncMap() {
     auto           exportedFuncAddr = GetProcAddress(handle, TEST_SYMBOL);
     void*          symDbFn          = nullptr;
     auto           iter             = funcMap->find(string(TEST_SYMBOL));
-    if (iter != funcMap->end()) {
-        symDbFn = (void*)(imageBaseAddr + iter->second);
-    }
+    if (iter != funcMap->end()) { symDbFn = (void*)(imageBaseAddr + iter->second); }
     if (symDbFn != exportedFuncAddr) {
         Error("Could not find critical symbol in pdb");
         fastDlsymState = false;
@@ -63,20 +61,17 @@ void initFastDlsym(const PDB::RawFile& rawPdbFile, const PDB::DBIStream& dbiStre
 
     for (const PDB::HashRecord& hashRecord : hashRecords) {
         const PDB::CodeView::DBI::Record* record = publicSymbolStream.GetRecord(symbolRecordStream, hashRecord);
-        const uint32_t                    rva
-            = imageSectionStream.ConvertSectionOffsetToRVA(record->data.S_PUB32.section, record->data.S_PUB32.offset);
-        if (rva == 0u)
-            continue;
+        const uint32_t                    rva =
+            imageSectionStream.ConvertSectionOffsetToRVA(record->data.S_PUB32.section, record->data.S_PUB32.offset);
+        if (rva == 0u) continue;
         funcMap->emplace(record->data.S_PUB32.name, rva);
 
         auto fake = pl::fake_symbol::getFakeSymbol(record->data.S_PUB32.name);
-        if (fake.has_value())
-            funcMap->emplace(fake.value(), rva);
+        if (fake.has_value()) funcMap->emplace(fake.value(), rva);
 
         // MCVAPI
         fake = pl::fake_symbol::getFakeSymbol(record->data.S_PUB32.name, true);
-        if (fake.has_value())
-            funcMap->emplace(fake.value(), rva);
+        if (fake.has_value()) funcMap->emplace(fake.value(), rva);
     }
 
     const PDB::ModuleInfoStream moduleInfoStream = dbiStream.CreateModuleInfoStream(rawPdbFile);
@@ -84,20 +79,16 @@ void initFastDlsym(const PDB::RawFile& rawPdbFile, const PDB::DBIStream& dbiStre
     const PDB::ArrayView<PDB::ModuleInfoStream::Module> modules = moduleInfoStream.GetModules();
 
     for (const PDB::ModuleInfoStream::Module& module : modules) {
-        if (!module.HasSymbolStream())
-            continue;
+        if (!module.HasSymbolStream()) continue;
         const PDB::ModuleSymbolStream moduleSymbolStream = module.CreateSymbolStream(rawPdbFile);
         moduleSymbolStream.ForEachSymbol([&imageSectionStream](const PDB::CodeView::DBI::Record* record) {
-            if (record->header.kind != PDB::CodeView::DBI::SymbolRecordKind::S_LPROC32)
-                return;
+            if (record->header.kind != PDB::CodeView::DBI::SymbolRecordKind::S_LPROC32) return;
             const uint32_t rva = imageSectionStream.ConvertSectionOffsetToRVA(
                 record->data.S_LPROC32.section,
                 record->data.S_LPROC32.offset
             );
             string name = record->data.S_LPROC32.name;
-            if (name.find("lambda") != std::string::npos) {
-                funcMap->emplace(record->data.S_LPROC32.name, rva);
-            }
+            if (name.find("lambda") != std::string::npos) { funcMap->emplace(record->data.S_LPROC32.name, rva); }
         });
     }
     fastDlsymState = true;
@@ -109,16 +100,13 @@ void initFastDlsym(const PDB::RawFile& rawPdbFile, const PDB::DBIStream& dbiStre
 void initReverseLookup() {
     Info("Loading Reverse Lookup Table");
     rvaMap = new unordered_multimap<int, string*>(funcMap->size());
-    for (auto& pair : *funcMap) {
-        rvaMap->insert({pair.second, (string*)&pair.first});
-    }
+    for (auto& pair : *funcMap) { rvaMap->insert({pair.second, (string*)&pair.first}); }
 }
 
 namespace pl::symbol_provider {
 
 void init() {
-    if (initialized)
-        return;
+    if (initialized) return;
     const wchar_t* const pdbPath = LR"(./bedrock_server.pdb)";
     MemoryFile           pdbFile = MemoryFile::Open(pdbPath);
     if (!pdbFile.baseAddress) {
@@ -153,8 +141,7 @@ void init() {
 [[maybe_unused]] void* pl_resolve_symbol(const char* symbolName) {
     static_assert(sizeof(HMODULE) == 8);
     std::lock_guard lock(dlsymLock);
-    if (!fastDlsymState)
-        return nullptr;
+    if (!fastDlsymState) return nullptr;
     auto iter = funcMap->find(string(symbolName));
     if (iter != funcMap->end()) {
         return (void*)(imageBaseAddr + iter->second);
@@ -175,9 +162,7 @@ void init() {
     int                 rva      = static_cast<int>(funcAddr - imageBaseAddr);
     auto const          iter     = rvaMap->equal_range(rva);
     std::vector<string> vec;
-    for (auto it = iter.first; it != iter.second; ++it) {
-        vec.push_back(*it->second);
-    }
+    for (auto it = iter.first; it != iter.second; ++it) { vec.push_back(*it->second); }
     size_t length = vec.size();
     *resultLength = length;
     *result       = new const char*[length + 1];
@@ -191,9 +176,7 @@ void init() {
 }
 
 [[maybe_unused]] void pl_free_lookup_result(const char** result) {
-    for (int i = 0; result[i] != nullptr; i++) {
-        delete[] result[i];
-    }
+    for (int i = 0; result[i] != nullptr; i++) { delete[] result[i]; }
     delete[] result;
 }
 

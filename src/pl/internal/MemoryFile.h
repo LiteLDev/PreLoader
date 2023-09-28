@@ -10,18 +10,9 @@ struct MemoryFile {
     void*  baseAddress;
 
     static MemoryFile Open(const wchar_t* path) {
-        HANDLE file = CreateFileW(
-            path,
-            GENERIC_READ,
-            FILE_SHARE_READ,
-            nullptr,
-            OPEN_EXISTING,
-            FILE_ATTRIBUTE_READONLY,
-            nullptr
-        );
-        if (file == INVALID_HANDLE_VALUE) {
-            return {INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, nullptr};
-        }
+        HANDLE file =
+            CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, nullptr);
+        if (file == INVALID_HANDLE_VALUE) { return {INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, nullptr}; }
 
         HANDLE fileMapping = CreateFileMappingW(file, nullptr, PAGE_READONLY, 0, 0, nullptr);
         if (fileMapping == nullptr) {

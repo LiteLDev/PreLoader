@@ -24,8 +24,7 @@ namespace pl {
 
 void addLibraryToPath() {
     auto* buffer = new (std::nothrow) WCHAR[MAX_PATH_LENGTH];
-    if (!buffer)
-        return;
+    if (!buffer) return;
 
     DWORD        length = GetEnvironmentVariableW(L"PATH", buffer, MAX_PATH_LENGTH);
     std::wstring path(buffer, length);
@@ -67,19 +66,15 @@ void loadRawLibraries() {
     std::filesystem::create_directories("plugins");
     directory_iterator ent("plugins");
     for (auto& file : ent) {
-        if (!file.is_regular_file())
-            continue;
+        if (!file.is_regular_file()) continue;
 
         auto& path     = file.path();
         auto  fileName = path.u8string();
 
         string ext = path.extension().u8string();
-        if (ext != ".dll") {
-            continue;
-        }
+        if (ext != ".dll") { continue; }
 
-        if (preloadList.count(fileName))
-            continue;
+        if (preloadList.count(fileName)) continue;
 
         string dllFileName = path.filename().u8string();
         auto   lib         = LoadLibrary(str2wstr(fileName).c_str());
@@ -93,8 +88,7 @@ void loadRawLibraries() {
 }
 
 bool loadLiteLoader() {
-    if (!exists(path("LiteLoader.dll")))
-        return false;
+    if (!exists(path("LiteLoader.dll"))) return false;
     return loadLibrary("LiteLoader.dll");
 }
 
@@ -104,13 +98,10 @@ void setup() {
         if (dllList) {
             std::string dllName;
             while (getline(dllList, dllName)) {
-                if (dllName.back() == '\n')
-                    dllName.pop_back();
-                if (dllName.back() == '\r')
-                    dllName.pop_back();
+                if (dllName.back() == '\n') dllName.pop_back();
+                if (dllName.back() == '\r') dllName.pop_back();
 
-                if (dllName.empty() || dllName.front() == '#')
-                    continue;
+                if (dllName.empty() || dllName.front() == '#') continue;
                 std::cout << "Preload: " << dllName << std::endl;
                 loadLibrary(dllName);
                 preloadList.insert(dllName);
@@ -137,8 +128,7 @@ void init() {
 
 
 [[maybe_unused]] BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
-    if (ul_reason_for_call != DLL_PROCESS_ATTACH)
-        return TRUE;
+    if (ul_reason_for_call != DLL_PROCESS_ATTACH) return TRUE;
 
     SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);
