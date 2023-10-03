@@ -138,7 +138,7 @@ void init() {
     initialized   = true;
 }
 
-[[maybe_unused]] void* pl_resolve_symbol(const char* symbolName) {
+void* pl_resolve_symbol(const char* symbolName) {
     static_assert(sizeof(HMODULE) == 8);
     std::lock_guard lock(dlsymLock);
     if (!fastDlsymState) return nullptr;
@@ -152,30 +152,33 @@ void init() {
     return nullptr;
 }
 
-[[maybe_unused]] void pl_lookup_symbol(void* func, size_t* resultLength, const char*** result) {
+const char* const* pl_lookup_symbol(void* func, size_t* resultLength) {
     if (!rvaMap) {
-        *resultLength = 0;
-        *result       = nullptr;
-        return;
+        if (resultLength) *resultLength = 0;
+        return nullptr;
     }
-    auto                funcAddr = reinterpret_cast<uintptr_t>(func);
-    int                 rva      = static_cast<int>(funcAddr - imageBaseAddr);
-    auto const          iter     = rvaMap->equal_range(rva);
-    std::vector<string> vec;
-    for (auto it = iter.first; it != iter.second; ++it) { vec.push_back(*it->second); }
-    size_t length = vec.size();
-    *resultLength = length;
-    *result       = new const char*[length + 1];
-    for (int i = 0; i < vec.size(); i++) {
-        size_t      strSize = vec[i].size() + 1;
-        const char* str     = new char[strSize];
-        memcpy((void*)str, vec[i].c_str(), strSize);
-        (*result)[i] = str;
+    vector<string> symbols;
+
+    auto funcAddr     = reinterpret_cast<uintptr_t>(func);
+    auto [begin, end] = rvaMap->equal_range(static_cast<int>(funcAddr - imageBaseAddr));
+    for (auto it = begin; it != end; ++it) { symbols.push_back(*it->second); }
+
+    size_t size = symbols.size();
+    if (resultLength) *resultLength = size;
+    if (!size) return nullptr;
+
+    auto result = new char*[size + 1];
+    for (int i = 0; i < symbols.size(); i++) {
+        size_t len = symbols[i].length() + 1;
+        result[i]  = new char[len];
+        memcpy(result[i], symbols[i].c_str(), len);
     }
-    (*result)[vec.size()] = nullptr;
+
+    result[symbols.size()] = nullptr;
+    return result;
 }
 
-[[maybe_unused]] void pl_free_lookup_result(const char** result) {
+void pl_free_lookup_result(const char* const* result) {
     for (int i = 0; result[i] != nullptr; i++) { delete[] result[i]; }
     delete[] result;
 }
