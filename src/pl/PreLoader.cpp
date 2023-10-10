@@ -87,9 +87,9 @@ void loadRawLibraries() {
     }
 }
 
-bool loadLiteLoader() {
-    if (!exists(path("LiteLoader.dll"))) return false;
-    return loadLibrary("LiteLoader.dll");
+bool loadLeviLamina() {
+    if (!exists(path("LeviLamina.dll"))) return false;
+    return loadLibrary("LeviLamina.dll");
 }
 
 void setup() {
@@ -112,8 +112,8 @@ void setup() {
         std::ofstream dllList(".\\plugins\\preload.conf");
         dllList.close();
     }
-    if (!loadLiteLoader()) {
-        Warn("LiteLoader not found, PreLoader is running as DLL Loader...");
+    if (!loadLeviLamina()) {
+        Warn("LeviLamina not found, PreLoader is running as DLL Loader...");
         loadRawLibraries();
     }
 }

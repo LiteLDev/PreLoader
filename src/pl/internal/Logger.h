@@ -30,9 +30,9 @@ inline void loadConfigFromJson(const std::string& fileName) {
 }
 
 inline void loadLoggerConfig() {
-    if (std::filesystem::exists("plugins/LiteLoader/LiteLoader.json")) {
+    if (std::filesystem::exists("plugins/LeviLamina/config.json")) {
         try {
-            loadConfigFromJson("plugins/LiteLoader/LiteLoader.json");
+            loadConfigFromJson("plugins/LeviLamina/config.json");
         } catch (...) { shouldLogColor = true; }
     } else {
         shouldLogColor = true;
