@@ -1,5 +1,6 @@
 #include "pl/SymbolProvider.h"
 
+#include <cstdint>
 #include <cstdio>
 #include <mutex>
 #include <string_view>
@@ -20,46 +21,35 @@
 #include "pl/internal/PdbUtils.h"
 #include "pl/internal/WindowsUtils.h"
 
-#include <Windows.h>
-
-using std::string, std::string_view;
-using std::unordered_map, std::unordered_multimap, std::vector;
-
 using namespace pl::utils;
 
-bool             fastDlsymState = false;
-bool             initialized    = false;
+// base address of bedrock_server.exe
 static uintptr_t imageBaseAddr;
 
-std::mutex                                  dlsymLock{};
-phmap::flat_hash_map<string, int, ap_hash>* funcMap;
-unordered_multimap<int, string*>*           rvaMap;
+// parallel hash maps comes with multithreading support and way faster than std::unordered_map
+using Symbol2RvaMap    = phmap::parallel_flat_hash_map<std::string, uint32_t>;
+using Rva2SymbolMap    = phmap::parallel_flat_hash_map<uint32_t, std::list<const std::string*>>;
+Symbol2RvaMap* funcMap = nullptr;
+Rva2SymbolMap* rvaMap  = nullptr;
 
-void testFuncMap() {
-    return;
-    // TODO: Update check symbol
-    constexpr auto TEST_SYMBOL      = "?initializeLogging@DedicatedServer@@AEAAXXZ";
-    auto           handle           = GetModuleHandle(nullptr);
-    auto           exportedFuncAddr = GetProcAddress(handle, TEST_SYMBOL);
-    void*          symDbFn          = nullptr;
-    auto           iter             = funcMap->find(string(TEST_SYMBOL));
-    if (iter != funcMap->end()) { symDbFn = (void*)(imageBaseAddr + iter->second); }
-    if (symDbFn != exportedFuncAddr) {
-        Error("Could not find critical symbol in pdb");
-        fastDlsymState = false;
-    }
-}
-
-void initFastDlsym(const PDB::RawFile& rawPdbFile, const PDB::DBIStream& dbiStream) {
+void initFunctionMap(const PDB::RawFile& rawPdbFile, const PDB::DBIStream& dbiStream) {
     Info("Loading symbols from pdb...");
-    funcMap                                          = new phmap::flat_hash_map<string, int, ap_hash>;
+
     const PDB::ImageSectionStream imageSectionStream = dbiStream.CreateImageSectionStream(rawPdbFile);
     const PDB::CoalescedMSFStream symbolRecordStream = dbiStream.CreateSymbolRecordStream(rawPdbFile);
     const PDB::PublicSymbolStream publicSymbolStream = dbiStream.CreatePublicSymbolStream(rawPdbFile);
+    const PDB::GlobalSymbolStream globalSymbolStream = dbiStream.CreateGlobalSymbolStream(rawPdbFile);
+    const PDB::ModuleInfoStream   moduleInfoStream   = dbiStream.CreateModuleInfoStream(rawPdbFile);
 
-    const PDB::ArrayView<PDB::HashRecord> hashRecords = publicSymbolStream.GetRecords();
+    const PDB::ArrayView<PDB::HashRecord> publicSymbolRecord = publicSymbolStream.GetRecords();
+    const PDB::ArrayView<PDB::HashRecord> globalSymbolRecord = globalSymbolStream.GetRecords();
 
-    for (const PDB::HashRecord& hashRecord : hashRecords) {
+    // pre alloc hash buckets, 1.2x for public symbols
+    funcMap = new Symbol2RvaMap(publicSymbolRecord.GetLength() * 1.1);
+
+    // public symbols are those symbols that are visible to the linker
+    // usually comes with mangling(like ?foo@@YAXXZ)
+    for (const PDB::HashRecord& hashRecord : publicSymbolRecord) {
         const PDB::CodeView::DBI::Record* record = publicSymbolStream.GetRecord(symbolRecordStream, hashRecord);
         const uint32_t                    rva =
             imageSectionStream.ConvertSectionOffsetToRVA(record->data.S_PUB32.section, record->data.S_PUB32.offset);
@@ -91,22 +81,20 @@ void initFastDlsym(const PDB::RawFile& rawPdbFile, const PDB::DBIStream& dbiStre
             if (name.find("lambda") != std::string::npos) { funcMap->emplace(record->data.S_LPROC32.name, rva); }
         });
     }
-    fastDlsymState = true;
-    testFuncMap();
-    Info("Fast Dlsym Loaded <{}>", funcMap->size());
+
+    Info("Loaded {} symbols", funcMap->size());
     fflush(stdout);
 }
 
 void initReverseLookup() {
     Info("Loading Reverse Lookup Table");
-    rvaMap = new unordered_multimap<int, string*>(funcMap->size());
-    for (auto& pair : *funcMap) { rvaMap->insert({pair.second, (string*)&pair.first}); }
+    rvaMap = new Rva2SymbolMap(funcMap->size());
+    for (auto& [sym, rva] : *funcMap) { rvaMap->at(rva).push_back(&sym); }
 }
 
 namespace pl::symbol_provider {
 
 void init() {
-    if (initialized) return;
     const wchar_t* const pdbPath = LR"(./bedrock_server.pdb)";
     MemoryFile           pdbFile = MemoryFile::Open(pdbPath);
     if (!pdbFile.baseAddress) {
@@ -132,17 +120,17 @@ void init() {
         MemoryFile::Close(pdbFile);
         return;
     }
-    initFastDlsym(rawPdbFile, dbiStream);
+    initFunctionMap(rawPdbFile, dbiStream);
     initReverseLookup();
     imageBaseAddr = (uintptr_t)GetModuleHandle(nullptr);
-    initialized   = true;
 }
 
 void* pl_resolve_symbol(const char* symbolName) {
-    static_assert(sizeof(HMODULE) == 8);
-    std::lock_guard lock(dlsymLock);
-    if (!fastDlsymState) return nullptr;
-    auto iter = funcMap->find(string(symbolName));
+    if (!funcMap) {
+        Error("pl_resolve_symbol called before init");
+        return nullptr;
+    }
+    auto iter = funcMap->find(std::string(symbolName));
     if (iter != funcMap->end()) {
         return (void*)(imageBaseAddr + iter->second);
     } else {
@@ -155,26 +143,26 @@ void* pl_resolve_symbol(const char* symbolName) {
 const char* const* pl_lookup_symbol(void* func, size_t* resultLength) {
     if (!rvaMap) {
         if (resultLength) *resultLength = 0;
+        Error("pl_lookup_symbol called before init");
         return nullptr;
     }
-    vector<string> symbols;
-
-    auto funcAddr     = reinterpret_cast<uintptr_t>(func);
-    auto [begin, end] = rvaMap->equal_range(static_cast<int>(funcAddr - imageBaseAddr));
-    for (auto it = begin; it != end; ++it) { symbols.push_back(*it->second); }
-
-    size_t size = symbols.size();
-    if (resultLength) *resultLength = size;
-    if (!size) return nullptr;
-
-    auto result = new char*[size + 1];
-    for (int i = 0; i < symbols.size(); i++) {
-        size_t len = symbols[i].length() + 1;
-        result[i]  = new char[len];
-        memcpy(result[i], symbols[i].c_str(), len);
+    auto funcAddr = reinterpret_cast<uintptr_t>(func);
+    auto it       = rvaMap->find(static_cast<uint32_t>(funcAddr - imageBaseAddr));
+    if (it == rvaMap->end()) {
+        if (resultLength) *resultLength = 0;
+        return nullptr;
     }
 
-    result[symbols.size()] = nullptr;
+    auto result = new char*[it->second.size() + 1];
+    if (resultLength) *resultLength = it->second.size();
+
+    size_t i = 0;
+    for (auto& sym : it->second) {
+        result[i] = new char[sym->length() + 1];
+        std::copy(sym->begin(), sym->end(), result[i]);
+        result[i][sym->length()] = '\0';
+    }
+    result[it->second.size()] = nullptr;// nullptr terminated
     return result;
 }
 
