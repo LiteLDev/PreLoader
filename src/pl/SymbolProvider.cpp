@@ -26,26 +26,25 @@ using namespace pl::utils;
 // base address of bedrock_server.exe
 static uintptr_t imageBaseAddr;
 
-// parallel hash maps comes with multithreading support and way faster than std::unordered_map
-using Symbol2RvaMap    = phmap::parallel_flat_hash_map<std::string, uint32_t>;
-using Rva2SymbolMap    = phmap::parallel_flat_hash_map<uint32_t, std::list<const std::string*>>;
+// phmap hash maps is thread-safe when reading
+using Symbol2RvaMap    = phmap::flat_hash_map<std::string, uint32_t>;
+using Rva2SymbolMap    = phmap::flat_hash_map<uint32_t, std::list<const std::string*>>;
 Symbol2RvaMap* funcMap = nullptr;
 Rva2SymbolMap* rvaMap  = nullptr;
 
 void initFunctionMap(const PDB::RawFile& rawPdbFile, const PDB::DBIStream& dbiStream) {
     Info("Loading symbols from pdb...");
 
-    const PDB::ImageSectionStream imageSectionStream = dbiStream.CreateImageSectionStream(rawPdbFile);
-    const PDB::CoalescedMSFStream symbolRecordStream = dbiStream.CreateSymbolRecordStream(rawPdbFile);
-    const PDB::PublicSymbolStream publicSymbolStream = dbiStream.CreatePublicSymbolStream(rawPdbFile);
-    const PDB::GlobalSymbolStream globalSymbolStream = dbiStream.CreateGlobalSymbolStream(rawPdbFile);
-    const PDB::ModuleInfoStream   moduleInfoStream   = dbiStream.CreateModuleInfoStream(rawPdbFile);
+    const PDB::ImageSectionStream imageSectionStream            = dbiStream.CreateImageSectionStream(rawPdbFile);
+    const PDB::CoalescedMSFStream symbolRecordStream            = dbiStream.CreateSymbolRecordStream(rawPdbFile);
+    const PDB::PublicSymbolStream publicSymbolStream            = dbiStream.CreatePublicSymbolStream(rawPdbFile);
+    const PDB::ModuleInfoStream   moduleInfoStream              = dbiStream.CreateModuleInfoStream(rawPdbFile);
+    const PDB::ArrayView<PDB::ModuleInfoStream::Module> modules = moduleInfoStream.GetModules();
 
     const PDB::ArrayView<PDB::HashRecord> publicSymbolRecord = publicSymbolStream.GetRecords();
-    const PDB::ArrayView<PDB::HashRecord> globalSymbolRecord = globalSymbolStream.GetRecords();
 
     // pre alloc hash buckets, 1.2x for public symbols
-    funcMap = new Symbol2RvaMap(publicSymbolRecord.GetLength() * 1.1);
+    funcMap = new Symbol2RvaMap(publicSymbolRecord.GetLength() * 1.2);
 
     // public symbols are those symbols that are visible to the linker
     // usually comes with mangling(like ?foo@@YAXXZ)
@@ -64,23 +63,37 @@ void initFunctionMap(const PDB::RawFile& rawPdbFile, const PDB::DBIStream& dbiSt
         if (fake.has_value()) funcMap->emplace(fake.value(), rva);
     }
 
-    const PDB::ModuleInfoStream moduleInfoStream = dbiStream.CreateModuleInfoStream(rawPdbFile);
-
-    const PDB::ArrayView<PDB::ModuleInfoStream::Module> modules = moduleInfoStream.GetModules();
-
+    // module symbols are those symbols that are not visible to the linker
+    // usually anonymous implementation/cleanup dtor/etc..., without mangling
     for (const PDB::ModuleInfoStream::Module& module : modules) {
-        if (!module.HasSymbolStream()) continue;
+        if (!module.HasSymbolStream()) { continue; }
+
         const PDB::ModuleSymbolStream moduleSymbolStream = module.CreateSymbolStream(rawPdbFile);
         moduleSymbolStream.ForEachSymbol([&imageSectionStream](const PDB::CodeView::DBI::Record* record) {
-            if (record->header.kind != PDB::CodeView::DBI::SymbolRecordKind::S_LPROC32) return;
-            const uint32_t rva = imageSectionStream.ConvertSectionOffsetToRVA(
-                record->data.S_LPROC32.section,
-                record->data.S_LPROC32.offset
-            );
-            string name = record->data.S_LPROC32.name;
-            if (name.find("lambda") != std::string::npos) { funcMap->emplace(record->data.S_LPROC32.name, rva); }
+            if (record->header.kind == PDB::CodeView::DBI::SymbolRecordKind::S_LPROC32) {
+                uint32_t rva = imageSectionStream.ConvertSectionOffsetToRVA(
+                    record->data.S_LPROC32.section,
+                    record->data.S_LPROC32.offset
+                );
+                if (rva == 0u) return;
+
+                std::string_view name = record->data.S_LPROC32.name;
+                bool             skip = true;
+                // symbol with '`' prefix is special symbol
+                if (name.starts_with("`")) {
+                    if (name.starts_with("`anonymous namespace'")) { skip = false; }
+                } else {
+                    if (name.starts_with("std::_Func_impl_no_alloc")) skip = true;
+                    else if (name.find("`dynamic") != std::string_view::npos) skip = true;
+                    else skip = false;
+                }
+                if (!skip) {
+                    funcMap->emplace(record->data.S_LPROC32.name, rva);
+                }
+            }
         });
     }
+
 
     Info("Loaded {} symbols", funcMap->size());
     fflush(stdout);
@@ -89,7 +102,7 @@ void initFunctionMap(const PDB::RawFile& rawPdbFile, const PDB::DBIStream& dbiSt
 void initReverseLookup() {
     Info("Loading Reverse Lookup Table");
     rvaMap = new Rva2SymbolMap(funcMap->size());
-    for (auto& [sym, rva] : *funcMap) { rvaMap->at(rva).push_back(&sym); }
+    for (auto& [sym, rva] : *funcMap) { (*rvaMap)[rva].push_back(&sym); }
 }
 
 namespace pl::symbol_provider {
