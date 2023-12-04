@@ -1,4 +1,5 @@
 #include "pl/internal/WindowsUtils.h"
+#include "StringUtils.h"
 
 #include <filesystem>
 
@@ -21,7 +22,7 @@ std::string pl::utils::GetCallerModuleFileName(unsigned long FramesToSkip) {
         );
         wchar_t buf[MAX_PATH] = {0};
         GetModuleFileNameExW(GetCurrentProcess(), hModule, buf, MAX_PATH);
-        return std::filesystem::path(buf).filename().u8string();
+        return u8str2str(std::filesystem::path(buf).filename().u8string());
     }
     return "Unknown";
 }

@@ -38,7 +38,7 @@ void addLibraryToPath() {
 
 bool loadLibrary(const string& libName, bool showFailInfo = true) {
     if (LoadLibraryW(str2wstr(libName).c_str())) {
-        Info("{} Injected.", std::filesystem::path(libName).filename().u8string());
+        Info("{} Injected.", u8str2str(std::filesystem::path(libName).filename().u8string()));
         return true;
     } else {
         if (showFailInfo) {
@@ -69,14 +69,14 @@ void loadRawLibraries() {
         if (!file.is_regular_file()) continue;
 
         auto& path     = file.path();
-        auto  fileName = path.u8string();
+        auto  fileName = u8str2str(path.u8string());
 
-        string ext = path.extension().u8string();
+        string ext = u8str2str(path.extension().u8string());
         if (ext != ".dll") { continue; }
 
         if (preloadList.count(fileName)) continue;
 
-        string dllFileName = path.filename().u8string();
+        string dllFileName = u8str2str(path.filename().u8string());
         auto   lib         = LoadLibrary(str2wstr(fileName).c_str());
         if (lib) {
             Info("Dll <{}> Injected", dllFileName);
@@ -137,7 +137,7 @@ void init() {
     GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &mode);
     SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 
-    // For #683, Change CWD to current module path
+    // Change current working dir to current module path to make sure we can load plugins correctly
     auto buffer = new wchar_t[MAX_PATH];
     GetModuleFileNameW(hModule, buffer, MAX_PATH);
     std::wstring path(buffer);

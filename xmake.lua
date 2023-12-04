@@ -20,7 +20,7 @@ add_requires("demangler v2.0.0")
 
 target("PreLoader")
     set_kind("shared")
-    set_languages("c++17")
+    set_languages("c++20")
     set_symbols("debug")
     add_headerfiles("src/(**.h)")
     add_includedirs("./src")
