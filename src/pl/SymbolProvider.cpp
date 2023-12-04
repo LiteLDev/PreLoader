@@ -138,7 +138,7 @@ void init() {
     imageBaseAddr = (uintptr_t)GetModuleHandle(nullptr);
 }
 
-void* pl_resolve_symbol(const char* symbolName) {
+void* pl_resolve_symbol(const char* symbolName, bool printNotFound) {
     if (!funcMap) {
         Error("pl_resolve_symbol called before init");
         return nullptr;
@@ -146,7 +146,7 @@ void* pl_resolve_symbol(const char* symbolName) {
     auto iter = funcMap->find(std::string(symbolName));
     if (iter != funcMap->end()) {
         return (void*)(imageBaseAddr + iter->second);
-    } else {
+    } else if (printNotFound) {
         Error("Could not find function in memory: {}", symbolName);
         Error("Plugin: {}", pl::utils::GetCallerModuleFileName());
     }
@@ -175,7 +175,7 @@ const char* const* pl_lookup_symbol(void* func, size_t* resultLength) {
         std::copy(sym->begin(), sym->end(), result[i]);
         result[i][sym->length()] = '\0';
     }
-    result[it->second.size()] = nullptr;// nullptr terminated
+    result[it->second.size()] = nullptr; // nullptr terminated
     return result;
 }
 

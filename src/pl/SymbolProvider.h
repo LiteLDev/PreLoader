@@ -13,7 +13,7 @@ void init();
  * @param printNotFound [in] Whether to print error message to console if the symbol is not found.
  * @return result The function address. nullptr if the function is not found.
  */
-PLCAPI void* pl_resolve_symbol(const char* symbolName);
+PLCAPI void* pl_resolve_symbol(const char* symbolName, bool printNotFound = true);
 
 /**
  * @brief Get the symbol name of a function address.
