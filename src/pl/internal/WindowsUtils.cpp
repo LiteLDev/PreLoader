@@ -20,8 +20,8 @@ std::string pl::utils::GetCallerModuleFileName(unsigned long FramesToSkip) {
             (LPCWSTR)frames[0],
             &hModule
         );
-        wchar_t buf[MAX_PATH] = {0};
-        GetModuleFileNameExW(GetCurrentProcess(), hModule, buf, MAX_PATH);
+        wchar_t buf[MAX_PATH_LENGTH] = {0};
+        GetModuleFileNameExW(GetCurrentProcess(), hModule, buf, MAX_PATH_LENGTH);
         return u8str2str(std::filesystem::path(buf).filename().u8string());
     }
     return "Unknown";

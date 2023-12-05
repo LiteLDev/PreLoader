@@ -22,8 +22,8 @@ inline void loadConfigFromJson(const std::string& fileName) {
     nlohmann::json json;
     file >> json;
     file.close();
-    if (json.find("ColorLog") != json.end()) {
-        shouldLogColor = json["ColorLog"];
+    if (json.contains("logger") && json["logger"].contains("colorLog")) {
+        shouldLogColor = json["logger"]["colorLog"];
     } else {
         shouldLogColor = true;
     }
@@ -48,14 +48,19 @@ inline void loadLoggerConfig() {
 #define COLOR_ERROR_TEXT   fmt::terminal_color::red
 
 #define LOG_PREFIX(prefix, color1, color2)                                                                             \
+    static auto zone = std::chrono::current_zone();                                                                    \
     fmt::print(                                                                                                        \
         shouldLogColor ? fmt::fg(color1) : fmt::text_style(),                                                          \
-        fmt::format("{:%H:%M:%S}", fmt::localtime(_time64(0)))                                                         \
+        fmt::format(                                                                                                   \
+            "{:%H:%M:%S}",                                                                                             \
+            std::chrono::floor<std::chrono::milliseconds>(zone->to_local(std::chrono::system_clock::now()))            \
+        )                                                                                                              \
     );                                                                                                                 \
-    fmt::print(shouldLogColor ? fmt::fg(color2) : fmt::text_style(), fmt::format(prefix, fmt::localtime(_time64(0))));
+    fmt::print(shouldLogColor ? fmt::fg(color2) : fmt::text_style(), prefix);
+
 #define LOG(color1, color2, prefix)                                                                                    \
     LOG_PREFIX(prefix, color1, color2);                                                                                \
-    std::string str  = fmt::format("[PreLoader] ", fmt::localtime(_time64(0)));                                        \
+    std::string str  = "[PreLoader] ";                                                                                 \
     str             += fmt::format(fmt::runtime(formatStr), args...);                                                  \
     str.append(1, '\n');
 

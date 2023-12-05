@@ -16,8 +16,6 @@ using namespace std::filesystem;
 using std::string;
 using std::wstring;
 
-constexpr const int MAX_PATH_LENGTH = 8192;
-
 std::set<std::string> preloadList;
 
 namespace pl {
@@ -100,17 +98,18 @@ void setup() {
             while (getline(dllList, dllName)) {
                 if (dllName.back() == '\n') dllName.pop_back();
                 if (dllName.back() == '\r') dllName.pop_back();
-
                 if (dllName.empty() || dllName.front() == '#') continue;
+
                 std::cout << "Preload: " << dllName << std::endl;
+
+                dllName = u8str2str(("plugins" / std::filesystem::path(dllName)).u8string());
+
                 loadLibrary(dllName);
+
                 preloadList.insert(dllName);
             }
             dllList.close();
         }
-    } else {
-        std::ofstream dllList(".\\plugins\\preload.conf");
-        dllList.close();
     }
     if (!loadLeviLamina()) {
         Warn("LeviLamina not found, PreLoader is running as DLL Loader...");
@@ -138,8 +137,8 @@ void init() {
     SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 
     // Change current working dir to current module path to make sure we can load plugins correctly
-    auto buffer = new wchar_t[MAX_PATH];
-    GetModuleFileNameW(hModule, buffer, MAX_PATH);
+    auto buffer = new wchar_t[MAX_PATH_LENGTH];
+    GetModuleFileNameW(hModule, buffer, MAX_PATH_LENGTH);
     std::wstring path(buffer);
     auto         cwd = path.substr(0, path.find_last_of('\\'));
     SetCurrentDirectoryW(cwd.c_str());

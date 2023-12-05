@@ -4,6 +4,8 @@
 
 namespace pl::utils {
 
+constexpr const int MAX_PATH_LENGTH = 8192;
+
 std::wstring str2wstr(const std::string& str, unsigned int codePage);
 
 std::wstring str2wstr(const std::string& str);

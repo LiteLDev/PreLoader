@@ -44,7 +44,7 @@ void initFunctionMap(const PDB::RawFile& rawPdbFile, const PDB::DBIStream& dbiSt
     const PDB::ArrayView<PDB::HashRecord> publicSymbolRecord = publicSymbolStream.GetRecords();
 
     // pre alloc hash buckets, 1.2x for public symbols
-    funcMap = new Symbol2RvaMap(publicSymbolRecord.GetLength() * 1.2);
+    funcMap = new Symbol2RvaMap((size_t)((double)publicSymbolRecord.GetLength() * 1.2));
 
     // public symbols are those symbols that are visible to the linker
     // usually comes with mangling(like ?foo@@YAXXZ)
@@ -83,13 +83,11 @@ void initFunctionMap(const PDB::RawFile& rawPdbFile, const PDB::DBIStream& dbiSt
                 if (name.starts_with("`")) {
                     if (name.starts_with("`anonymous namespace'")) { skip = false; }
                 } else {
-                    if (name.starts_with("std::_Func_impl_no_alloc")) skip = true;
-                    else if (name.find("`dynamic") != std::string_view::npos) skip = true;
+                    if (name.starts_with("std::_Func_impl_no_alloc") || name.find("`dynamic") != std::string_view::npos)
+                        skip = true;
                     else skip = false;
                 }
-                if (!skip) {
-                    funcMap->emplace(record->data.S_LPROC32.name, rva);
-                }
+                if (!skip) { funcMap->emplace(record->data.S_LPROC32.name, rva); }
             }
         });
     }
