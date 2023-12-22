@@ -2,7 +2,9 @@
 
 #include "pl/internal/Macro.h"
 
+#ifdef __cplusplus
 namespace pl::symbol_provider {
+#endif
 
 void init();
 
@@ -10,10 +12,19 @@ void init();
  * @brief Resolve a symbol name to a function address.
  *
  * @param symbolName [in] The symbol name.
- * @param printNotFound [in] Whether to print error message to console if the symbol is not found.
  * @return result The function address. nullptr if the function is not found.
  */
-PLCAPI void* pl_resolve_symbol(const char* symbolName, bool printNotFound = true);
+PLCAPI void* pl_resolve_symbol(const char* symbolName);
+
+/**
+ * @brief Resolve a symbol name to a function address.
+ *
+ * @param symbolName [in] The symbol name.
+ * @return result The function address. nullptr if the function is not found.
+ *
+ * @note This function will not print error message if the function is not found.
+ */
+PLCAPI void* pl_resolve_symbol_silent(const char* symbolName);
 
 /**
  * @brief Get the symbol name of a function address.
@@ -32,4 +43,6 @@ PLCAPI const char* const* pl_lookup_symbol(void* func, size_t* resultLength);
  */
 PLCAPI void pl_free_lookup_result(const char* const* result);
 
+#ifdef __cplusplus
 } // namespace pl::symbol_provider
+#endif

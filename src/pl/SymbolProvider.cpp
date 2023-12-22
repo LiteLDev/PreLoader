@@ -1,8 +1,6 @@
 #include "pl/SymbolProvider.h"
 
-#include <cstdint>
 #include <cstdio>
-#include <mutex>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
@@ -14,7 +12,6 @@
 
 #include <parallel_hashmap/phmap.h>
 
-#include "pl/internal/ApHash.h"
 #include "pl/internal/FakeSymbol.h"
 #include "pl/internal/Logger.h"
 #include "pl/internal/MemoryFile.h"
@@ -136,19 +133,25 @@ void init() {
     imageBaseAddr = (uintptr_t)GetModuleHandle(nullptr);
 }
 
-void* pl_resolve_symbol(const char* symbolName, bool printNotFound) {
+void* pl_resolve_symbol(const char* symbolName) {
     if (!funcMap) {
         Error("pl_resolve_symbol called before init");
         return nullptr;
     }
     auto iter = funcMap->find(std::string(symbolName));
-    if (iter != funcMap->end()) {
-        return (void*)(imageBaseAddr + iter->second);
-    } else if (printNotFound) {
+    if (iter == funcMap->end()) {
         Error("Could not find function in memory: {}", symbolName);
         Error("Plugin: {}", pl::utils::GetCallerModuleFileName());
+        return nullptr;
     }
-    return nullptr;
+    return (void*)(imageBaseAddr + iter->second);
+}
+
+void* pl_resolve_symbol_silent(const char* symbolName) {
+    if (!funcMap) { return nullptr; }
+    auto iter = funcMap->find(std::string(symbolName));
+    if (iter == funcMap->end()) { return nullptr; }
+    return (void*)(imageBaseAddr + iter->second);
 }
 
 const char* const* pl_lookup_symbol(void* func, size_t* resultLength) {
