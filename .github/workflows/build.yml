@@ -89,7 +89,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: preloader-${{ env.VERSION }}-windows-amd64
-          path: artifacts
+          path: artifacts/preloader-${{ env.VERSION }}-windows-amd64
 
   upload-to-release:
     name: Upload to Release
@@ -109,7 +109,7 @@ jobs:
         run: |
           mv preloader-${{ env.VERSION }}-windows-amd64 artifacts
           mv artifacts/preloader-${{ env.VERSION }}-windows-amd64 .
-          zip -r preloader-${{ env.VERSION }}-windows-amd64.zip preloader-${{ env.VERSION }}-windows-amd64
+          zip -r preloader-${{ env.VERSION }}-windows-amd64.zip preloader-${{ env.VERSION }}-windows-amd64/*
           echo "ZIP_SHA256=$(sha256sum preloader-${{ env.VERSION }}-windows-amd64.zip | cut -d ' ' -f 1)" >> $GITHUB_ENV
           echo "DLL_SHA256=$(sha256sum preloader-${{ env.VERSION }}-windows-amd64/bin/PreLoader.dll | cut -d ' ' -f 1)" >> $GITHUB_ENV
           echo "PDB_SHA256=$(sha256sum preloader-${{ env.VERSION }}-windows-amd64/bin/PreLoader.pdb | cut -d ' ' -f 1)" >> $GITHUB_ENV
