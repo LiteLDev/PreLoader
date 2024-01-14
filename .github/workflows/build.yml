@@ -89,7 +89,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: preloader-${{ env.VERSION }}-windows-amd64
-          path: artifacts/preloader-${{ env.VERSION }}-windows-amd64
+          path: artifacts
 
   upload-to-release:
     name: Upload to Release
