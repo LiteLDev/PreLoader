@@ -110,7 +110,8 @@ jobs:
           mv preloader-${{ env.VERSION }}-windows-amd64 artifacts
           mv artifacts/preloader-${{ env.VERSION }}-windows-amd64 .
           cd preloader-${{ env.VERSION }}-windows-amd64
-          zip -r preloader-${{ env.VERSION }}-windows-amd64.zip *
+          zip -r ../preloader-${{ env.VERSION }}-windows-amd64.zip *
+          cd ..
           echo "ZIP_SHA256=$(sha256sum preloader-${{ env.VERSION }}-windows-amd64.zip | cut -d ' ' -f 1)" >> $GITHUB_ENV
           echo "DLL_SHA256=$(sha256sum preloader-${{ env.VERSION }}-windows-amd64/bin/PreLoader.dll | cut -d ' ' -f 1)" >> $GITHUB_ENV
           echo "PDB_SHA256=$(sha256sum preloader-${{ env.VERSION }}-windows-amd64/bin/PreLoader.pdb | cut -d ' ' -f 1)" >> $GITHUB_ENV
