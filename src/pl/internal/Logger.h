@@ -11,6 +11,8 @@
 #include <nlohmann/json.hpp>
 #include <string>
 
+#include "WindowsUtils.h"
+
 inline bool shouldLogColor;
 
 inline void loadConfigFromJson(const std::string& fileName) {
@@ -48,14 +50,8 @@ inline void loadLoggerConfig() {
 #define COLOR_ERROR_TEXT   fmt::terminal_color::red
 
 #define LOG_PREFIX(prefix, color1, color2)                                                                             \
-    static auto zone = std::chrono::current_zone();                                                                    \
-    fmt::print(                                                                                                        \
-        shouldLogColor ? fmt::fg(color1) : fmt::text_style(),                                                          \
-        fmt::format(                                                                                                   \
-            "{:%H:%M:%S}",                                                                                             \
-            std::chrono::floor<std::chrono::milliseconds>(zone->to_local(std::chrono::system_clock::now()))            \
-        )                                                                                                              \
-    );                                                                                                                 \
+    auto [time, ms] = ::pl::utils::getLocalTime();                                                                     \
+    fmt::print(shouldLogColor ? fmt::fg(color1) : fmt::text_style(), fmt::format("{:%H:%M:%S}.{}", time, ms));         \
     fmt::print(shouldLogColor ? fmt::fg(color2) : fmt::text_style(), prefix);
 
 #define LOG(color1, color2, prefix)                                                                                    \
