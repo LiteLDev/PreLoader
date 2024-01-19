@@ -21,3 +21,19 @@ std::string pl::utils::wstr2str(const std::wstring& wstr) {
     delete[] buffer;
     return result;
 }
+
+std::vector<std::string_view> pl::utils::split(std::string_view s, std::string_view delimiter) {
+    size_t posStart = 0, posEnd, delimLen = delimiter.length();
+
+    std::string_view              token;
+    std::vector<std::string_view> result;
+
+    while ((posEnd = s.find(delimiter, posStart)) != std::string::npos) {
+        token    = s.substr(posStart, posEnd - posStart);
+        posStart = posEnd + delimLen;
+        result.push_back(token);
+    }
+    result.push_back(s.substr(posStart));
+
+    return result;
+}

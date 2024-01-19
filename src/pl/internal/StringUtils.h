@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 namespace pl::utils {
 
@@ -16,5 +17,7 @@ std::string wstr2str(const std::wstring& wstr);
     std::string& tmp = *reinterpret_cast<std::string*>(&str);
     return {std::move(tmp)};
 }
+
+std::vector<std::string_view> split(std::string_view s, std::string_view delimiter);
 
 } // namespace pl::utils
