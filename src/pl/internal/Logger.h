@@ -57,23 +57,23 @@ inline void loadLoggerConfig() {
 #define LOG(color1, color2, prefix)                                                                                    \
     LOG_PREFIX(prefix, color1, color2);                                                                                \
     std::string str  = "[PreLoader] ";                                                                                 \
-    str             += fmt::format(fmt::runtime(formatStr), args...);                                                  \
+    str             += fmt::vformat(__fmt.get(), fmt::make_format_args(__args...));                                    \
     str.append(1, '\n');
 
-template <typename... Args>
-void inline Info(const std::string& formatStr, const Args&... args) {
+template <typename... _Args>
+void inline Info(fmt::format_string<_Args...> __fmt, _Args&&... __args) {
     LOG(COLOR_TIME, COLOR_INFO_PREFIX, " INFO ");
     fmt::print(fmt::fg(COLOR_INFO_TEXT), str);
 }
 
-template <typename... Args>
-void inline Warn(const std::string& formatStr, const Args&... args) {
+template <typename... _Args>
+void inline Warn(fmt::format_string<_Args...> __fmt, _Args&&... __args) {
     LOG(COLOR_TIME, COLOR_WARN_PREFIX, " WARN ");
     fmt::print(fmt::fg(COLOR_WARN_TEXT) | fmt::emphasis::bold, str);
 }
 
-template <typename... Args>
-void inline Error(const std::string& formatStr, const Args&... args) {
+template <typename... _Args>
+void inline Error(fmt::format_string<_Args...> __fmt, _Args&&... __args) {
     LOG(COLOR_TIME, COLOR_ERROR_PREFIX, " ERROR ");
     fmt::print(fmt::fg(COLOR_ERROR_TEXT) | fmt::emphasis::bold, str);
 }
