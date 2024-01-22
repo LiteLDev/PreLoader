@@ -3,6 +3,7 @@
 #include "pl/internal/WindowsUtils.h"
 #include <filesystem>
 #include <fstream>
+#include <libloaderapi.h>
 #include <memory>
 #include <pe_bliss/pe_bliss.h>
 
@@ -13,6 +14,7 @@ std::shared_ptr<pl::dependency_walker::LibrarySearcher> pl::dependency_walker::L
     auto envPath        = std::string_view(std::getenv("PATH"));
     auto envPathHashNew = std::hash<std::string_view>()(envPath);
 
+    // create new LibrarySearcher instance only when ENV:PATH changed
     if (envPathHash != envPathHashNew) {
         instance    = std::make_shared<pl::dependency_walker::LibrarySearcher>(LibrarySearcher(envPath));
         envPathHash = envPathHashNew;
@@ -35,8 +37,16 @@ pl::dependency_walker::LibrarySearcher::LibrarySearcher(std::string_view envPath
 std::optional<std::string> pl::dependency_walker::LibrarySearcher::getLibraryPath(std::string libName) const {
     static auto apiSetSchema = parseApiSetSchema();
 
-    // windows's filesystem is case-insensitive
+    // Windows's filesystem is case-insensitive
     std::transform(libName.begin(), libName.end(), libName.begin(), ::tolower);
+
+    // try get the module from currently loaded module
+    auto handler = GetModuleHandleA(libName.c_str());
+    if (handler != nullptr) {
+        char path[MAX_PATH];
+        GetModuleFileNameA(handler, path, MAX_PATH);
+        return std::string(path);
+    }
 
     // handle api set schema redirection
     if (apiSetSchema.find(libName) != apiSetSchema.end()) { libName = apiSetSchema.at(libName); }

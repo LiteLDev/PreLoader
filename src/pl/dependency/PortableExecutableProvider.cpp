@@ -5,7 +5,10 @@
 #include <pe_bliss/pe_bliss.h>
 namespace pl::dependency_walker {
 
-PortableExecutableProvider::PortableExecutableProvider(const std::string& libPath) {
+PortableExecutableProvider::PortableExecutableProvider(
+    std::shared_ptr<LibrarySearcher> libSearcher,
+    const std::string&               libPath
+) {
     using namespace pe_bliss;
     try {
         std::ifstream peFile(libPath, std::ios::in | std::ios::binary);
@@ -14,7 +17,7 @@ PortableExecutableProvider::PortableExecutableProvider(const std::string& libPat
             const imported_functions_list imports = get_imported_functions(image);
             for (const auto& iLib : imports) {
                 auto& iLibName = iLib.get_name();
-                auto  iLibPath = LibrarySearcher::getInstance()->getLibraryPath(iLibName);
+                auto  iLibPath = libSearcher->getLibraryPath(iLibName);
                 // skip os libraries to reduce unnecessary query, since they are already loaded successfully
                 if (iLibPath.has_value() && iLibPath->starts_with(utils::getSystemRoot())) {
                     mImports[iLibName] = {};

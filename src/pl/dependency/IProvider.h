@@ -1,4 +1,5 @@
 #pragma once
+#include "pl/dependency/LibrarySearcher.h"
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -21,7 +22,7 @@ private:
     ImportContainer mImports;
 
 public:
-    explicit PortableExecutableProvider(const std::string& path);
+    explicit PortableExecutableProvider(std::shared_ptr<LibrarySearcher> libSearcher,const std::string& path);
     bool                   queryExport(const std::string&) override;
     const ImportContainer& getImports() override;
 };
