@@ -3,9 +3,11 @@
 #include "pl/internal/WindowsUtils.h"
 #include <filesystem>
 #include <fstream>
-#include <libloaderapi.h>
 #include <memory>
 #include <pe_bliss/pe_bliss.h>
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 std::shared_ptr<pl::dependency_walker::LibrarySearcher> pl::dependency_walker::LibrarySearcher::getInstance() {
     static size_t                           envPathHash = 0;

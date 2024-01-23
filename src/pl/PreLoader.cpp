@@ -4,6 +4,7 @@
 #include <set>
 #include <string>
 
+#include "pl/dependency/DependencyWalker.h"
 #include "pl/internal/Logger.h"
 #include "pl/internal/StringUtils.h"
 
@@ -33,7 +34,6 @@ void addLibraryToPath() {
     delete[] buffer;
 }
 
-
 bool loadLibrary(const string& libName, bool showFailInfo = true) {
     if (LoadLibraryW(str2wstr(libName).c_str())) {
         Info("{} Injected.", u8str2str(std::filesystem::path(libName).filename().u8string()));
@@ -45,7 +45,7 @@ bool loadLibrary(const string& libName, bool showFailInfo = true) {
             Error("Error code: {} !", error_message_id);
             LPWSTR message_buffer = nullptr;
             FormatMessage(
-                FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
+                FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
                 nullptr,
                 error_message_id,
                 NULL,
