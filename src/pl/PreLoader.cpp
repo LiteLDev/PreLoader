@@ -54,6 +54,10 @@ bool loadLibrary(const string& libName, bool showFailInfo = true) {
                 nullptr
             );
             Error("{}", wstr2str(message_buffer));
+            if (error_message_id == 126 || error_message_id == 127) {
+                Error("Analyzing dependency, please wait for a while...");
+                Error("Dependency diagnostic:\n{}", dependency_walker::pl_diagnostic_dependency_string(libName));
+            }
             LocalFree(message_buffer);
         }
         return false;
