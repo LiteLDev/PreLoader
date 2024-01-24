@@ -22,12 +22,17 @@ private:
     ImportContainer mImports;
 
 public:
-    explicit PortableExecutableProvider(std::shared_ptr<LibrarySearcher> libSearcher,const std::string& path);
+    explicit PortableExecutableProvider(
+        const std::shared_ptr<LibrarySearcher>& libSearcher,
+        const std::u8string&                    systemRoot,
+        const std::filesystem::path&            path
+    );
     bool                   queryExport(const std::string&) override;
     const ImportContainer& getImports() override;
 };
 
-/// InternalSymbolProvider provide a proxy to bds apis query in SymbolProvider, since bds is loaded successfully now, imports will be ignore
+/// InternalSymbolProvider provide a proxy to bds apis query in SymbolProvider, since bds is loaded successfully now,
+/// imports will be ignore
 class InternalSymbolProvider : public IProvider {
 public:
     InternalSymbolProvider();

@@ -36,26 +36,26 @@ pl::dependency_walker::LibrarySearcher::LibrarySearcher(std::string_view envPath
     for (const auto& path : pathList) { mLibraryPathList.insert(std::filesystem::path(path)); }
 }
 
-std::optional<std::string> pl::dependency_walker::LibrarySearcher::getLibraryPath(std::string libName) const {
+std::optional<std::filesystem::path> pl::dependency_walker::LibrarySearcher::getLibraryPath(std::string libName) const {
     static auto apiSetSchema = parseApiSetSchema();
 
     // Windows's filesystem is case-insensitive
     std::transform(libName.begin(), libName.end(), libName.begin(), ::tolower);
 
-    // try get the module from currently loaded module
+    // handle api set schema redirection
+    if (apiSetSchema.find(libName) != apiSetSchema.end()) { libName = apiSetSchema.at(libName); }
+
+    // try to get the module from currently loaded module
     auto handler = GetModuleHandleA(libName.c_str());
     if (handler != nullptr) {
         char path[MAX_PATH];
         GetModuleFileNameA(handler, path, MAX_PATH);
-        return std::string(path);
+        return path;
     }
-
-    // handle api set schema redirection
-    if (apiSetSchema.find(libName) != apiSetSchema.end()) { libName = apiSetSchema.at(libName); }
 
     for (const auto& p : mLibraryPathList) {
         auto file = p / libName;
-        if (exists(file)) { return file.string(); }
+        if (exists(file)) { return file; }
     }
     return std::nullopt;
 }

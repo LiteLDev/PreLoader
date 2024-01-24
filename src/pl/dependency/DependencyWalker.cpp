@@ -8,39 +8,45 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <utility>
 
 using namespace pl::dependency_walker;
 
-static std::unique_ptr<IProvider>
-createProvider(std::shared_ptr<LibrarySearcher> libSearcher, const std::string& libName, const std::string& libPath) {
+static std::unique_ptr<IProvider> createProvider(
+    const std::shared_ptr<LibrarySearcher>& libSearcher,
+    const std::u8string&                    systemRoot,
+    const std::string&                      libName,
+    const std::filesystem::path&            libPath
+) {
     if (libName == "bedrock_server.dll" || libName == "bedrock_server_mod.exe") {
         return std::make_unique<InternalSymbolProvider>();
     } else {
-        return std::make_unique<PortableExecutableProvider>(libSearcher, libPath);
+        return std::make_unique<PortableExecutableProvider>(libSearcher, systemRoot, libPath);
     }
 }
 
 static std::unique_ptr<DependencyIssueItem> createDiagnosticMessage(
-    std::string                             path,
+    std::filesystem::path                   path,
     std::unique_ptr<IProvider>              provider,
     const std::shared_ptr<LibrarySearcher>& libSearcher,
-    const std::string&                      systemRoot
+    const std::u8string&                    systemRoot
 ) {
     auto result   = std::make_unique<DependencyIssueItem>();
     result->mPath = path;
 
+    std::u8string u8Path = path.u8string();
     // transform to lower case since windows is case-insensitive
-    std::transform(path.begin(), path.end(), path.begin(), ::tolower);
+    std::transform(u8Path.begin(), u8Path.end(), u8Path.begin(), ::tolower);
 
     // skip system libraries to reduce unnecessary query, since they are already loaded successfully
-    if (path.starts_with(systemRoot)) return nullptr;
+    if (u8Path.starts_with(systemRoot)) return nullptr;
 
     auto imports = provider->getImports();
     for (const auto& [importLib, importFun] : imports) {
         auto importPath    = libSearcher->getLibraryPath(importLib);
         auto containsError = false;
         if (importPath.has_value()) {
-            auto subProvider = createProvider(libSearcher, importLib, importPath.value());
+            auto subProvider = createProvider(libSearcher, systemRoot, importLib, importPath.value());
             for (const auto& func : importFun) {
                 if (!subProvider->queryExport(func)) {
                     result->mMissingProcedure[importLib].insert(func);
@@ -64,7 +70,7 @@ static void
 printDependencyError(const std::unique_ptr<DependencyIssueItem>& item, std::ostream& stream, size_t depth = 0) {
     std::string indent(depth * 3 + 3, ' ');
     if (item->mContainsError) {
-        stream << indent << fmt::format("module: {}", item->mPath) << std::endl;
+        stream << indent << fmt::format("module: {}", pl::utils::u8str2str(item->mPath.u8string())) << std::endl;
         if (!item->mMissingModule.empty()) {
             stream << indent << "missing module:" << std::endl;
             for (const auto& missingModule : item->mMissingModule) {
@@ -91,14 +97,15 @@ printDependencyError(const std::unique_ptr<DependencyIssueItem>& item, std::ostr
     }
 }
 
-std::unique_ptr<DependencyIssueItem> pl::dependency_walker::pl_diagnostic_dependency(std::string path) {
+std::unique_ptr<DependencyIssueItem> pl::dependency_walker::pl_diagnostic_dependency(const std::filesystem::path& path
+) {
     auto libSearcher = LibrarySearcher::getInstance();
-    auto systemRoot  = pl::utils::getSystemRoot();
-    auto provider    = std::make_unique<PortableExecutableProvider>(libSearcher, path);
+    auto systemRoot  = pl::utils::getSystemRoot().u8string();
+    auto provider    = std::make_unique<PortableExecutableProvider>(libSearcher, systemRoot, path);
     return createDiagnosticMessage(path, std::move(provider), libSearcher, systemRoot);
 }
 
-std::string pl::dependency_walker::pl_diagnostic_dependency_string(std::string path) {
+std::string pl::dependency_walker::pl_diagnostic_dependency_string(const std::filesystem::path& path) {
     auto              result = pl_diagnostic_dependency(path);
     std::stringstream stream;
     printDependencyError(result, stream);

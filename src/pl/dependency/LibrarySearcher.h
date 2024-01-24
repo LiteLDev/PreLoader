@@ -17,6 +17,6 @@ public:
     static std::shared_ptr<LibrarySearcher> getInstance();
     /// the function search directories and return the path that contains target library
     /// @param libName the library to search, case insensitive
-    std::optional<std::string> getLibraryPath(std::string libName) const;
+    std::optional<std::filesystem::path> getLibraryPath(std::string libName) const;
 };
 } // namespace pl::dependency_walker

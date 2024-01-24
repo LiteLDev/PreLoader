@@ -6,8 +6,9 @@
 namespace pl::dependency_walker {
 
 PortableExecutableProvider::PortableExecutableProvider(
-    std::shared_ptr<LibrarySearcher> libSearcher,
-    const std::string&               libPath
+    const std::shared_ptr<LibrarySearcher>& libSearcher,
+    const std::u8string&                    systemRoot,
+    const std::filesystem::path&            libPath
 ) {
     using namespace pe_bliss;
     try {
@@ -19,7 +20,7 @@ PortableExecutableProvider::PortableExecutableProvider(
                 auto& iLibName = iLib.get_name();
                 auto  iLibPath = libSearcher->getLibraryPath(iLibName);
                 // skip os libraries to reduce unnecessary query, since they are already loaded successfully
-                if (iLibPath.has_value() && iLibPath->starts_with(utils::getSystemRoot())) {
+                if (iLibPath.has_value() && iLibPath->u8string().starts_with(systemRoot)) {
                     mImports[iLibName] = {};
                     continue;
                 }

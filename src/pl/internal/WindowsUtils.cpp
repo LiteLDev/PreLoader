@@ -44,7 +44,7 @@ std::pair<std::tm, int> getLocalTime() {
     return {time, sysTime.wMilliseconds};
 }
 
-std::string getSystemRoot() {
+std::filesystem::path getSystemRoot() {
     auto        len = GetSystemDirectoryA(nullptr, 0);
     std::string buffer(len - 1, '\0');
     GetSystemDirectoryA(buffer.data(), len);
