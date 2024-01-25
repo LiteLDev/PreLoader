@@ -44,10 +44,7 @@ jobs:
           restore-keys: |
             xmake-
 
-      - name: Update XMake Repository
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - run: |
           xmake repo -u
 
       - name: Get Release Version Tag
