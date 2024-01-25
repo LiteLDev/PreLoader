@@ -1,14 +1,14 @@
 {
     "format_version": 2,
     "tooth": "github.com/LiteLDev/PreLoader",
-    "version": "1.4.1",
+    "version": "1.4.2",
     "info": {
         "name": "PreLoader",
         "description": "A library preloader for loading LeviLamina",
         "author": "LiteLDev",
         "tags": []
     },
-    "asset_url": "https://github.com/LiteLDev/PreLoader/releases/download/v1.4.1/preloader-v1.4.1-windows-amd64.zip",
+    "asset_url": "https://github.com/LiteLDev/PreLoader/releases/download/v1.4.2/preloader-v1.4.2-windows-amd64.zip",
     "files": {
         "place": [
             {

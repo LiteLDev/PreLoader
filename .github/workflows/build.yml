@@ -47,7 +47,10 @@ jobs:
             ${{ runner.os }}-xmake-
 
       - name: Update XMake Repository
-        run: xmake repo -u
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          xmake repo -u
 
       - name: Get Release Version Tag
         if: github.event_name == 'release'
