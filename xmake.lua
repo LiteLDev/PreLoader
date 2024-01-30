@@ -17,7 +17,7 @@ add_requires("parallel-hashmap 1.35")
 add_requires("pe_bliss")
 
 add_requires("detours v4.0.1-xmake.1")
-add_requires("demangler v17.0.6")
+add_requires("demangler v17.0.7")
 
 target("PreLoader")
     set_kind("shared")
