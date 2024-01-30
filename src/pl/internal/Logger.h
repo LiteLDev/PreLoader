@@ -51,7 +51,7 @@ inline void loadLoggerConfig() {
 
 #define LOG_PREFIX(prefix, color1, color2)                                                                             \
     auto [time, ms] = ::pl::utils::getLocalTime();                                                                     \
-    fmt::print(shouldLogColor ? fmt::fg(color1) : fmt::text_style(), fmt::format("{:%H:%M:%S}.{}", time, ms));         \
+    fmt::print(shouldLogColor ? fmt::fg(color1) : fmt::text_style(), fmt::format("{:%H:%M:%S}.{:0>3}", time, ms));     \
     fmt::print(shouldLogColor ? fmt::fg(color2) : fmt::text_style(), prefix);
 
 #define LOG(color1, color2, prefix)                                                                                    \
