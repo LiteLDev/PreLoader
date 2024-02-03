@@ -39,6 +39,11 @@ inline void loadLoggerConfig() {
 #define COLOR_ERROR_PREFIX fmt::terminal_color::bright_red
 #define COLOR_ERROR_TEXT   fmt::terminal_color::red
 
+#pragma push_macro("LOG_PREFIX")
+#pragma push_macro("LOG")
+#undef LOG_PREFIX
+#undef LOG
+
 #define LOG_PREFIX(prefix, color1, color2)                                                                             \
     auto [time, ms] = ::pl::utils::getLocalTime();                                                                     \
     fmt::print(shouldLogColor ? fmt::fg(color1) : fmt::text_style(), fmt::format("{:%H:%M:%S}.{:0>3}", time, ms));     \
@@ -67,3 +72,8 @@ void inline Error(fmt::format_string<Args...> __fmt, Args&&... __args) {
     LOG(COLOR_TIME, COLOR_ERROR_PREFIX, " ERROR ");
     fmt::print(fmt::fg(COLOR_ERROR_TEXT) | fmt::emphasis::bold, str);
 }
+
+#undef LOG_PREFIX
+#undef LOG
+#pragma pop_macro("LOG_PREFIX")
+#pragma pop_macro("LOG")
