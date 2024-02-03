@@ -8,6 +8,7 @@
 #include <ostream>
 #include <set>
 #include <string>
+#include <string_view>
 
 #include "pl/dependency/DependencyWalker.h"
 #include "pl/internal/Logger.h"
@@ -34,6 +35,8 @@ using std::wstring;
 std::set<std::string> preloadList;
 
 namespace pl {
+
+constexpr std::string_view NativePluginManagerName = "preload-native";
 
 void addLibraryToPath() {
     auto* buffer = new (std::nothrow) WCHAR[MAX_PATH_LENGTH];
@@ -103,35 +106,50 @@ void loadRawLibraries() {
     }
 }
 
-bool loadLeviLamina() {
-    if (!exists(path("LeviLamina.dll"))) return false;
-    return loadLibrary("LeviLamina.dll");
-}
-
-void setup() {
-    if (exists(path(".\\plugins\\preload.conf"))) {
-        std::ifstream dllList(".\\plugins\\preload.conf");
-        if (dllList) {
-            std::string dllName;
-            while (getline(dllList, dllName)) {
-                if (dllName.back() == '\n') dllName.pop_back();
-                if (dllName.back() == '\r') dllName.pop_back();
-                if (dllName.empty() || dllName.front() == '#') continue;
-
-                std::cout << "Preload: " << dllName << std::endl;
-
-                dllName = u8str2str(("plugins" / std::filesystem::path(dllName)).u8string());
-
-                loadLibrary(dllName);
-
-                preloadList.insert(dllName);
-            }
-            dllList.close();
+void loadPreloadNativePlugins() {
+    namespace fs        = std::filesystem;
+    fs::path pluginsDir = ".\\plugins";
+    for (const auto& entry : fs::directory_iterator(pluginsDir)) {
+        if (!entry.is_directory()) { continue; }
+        fs::path manifestPath = entry.path() / "manifest.json";
+        if (!fs::exists(manifestPath)) { continue; }
+        std::ifstream manifestFile(manifestPath);
+        if (manifestFile) {
+            try {
+                nlohmann::json manifestJson;
+                manifestFile >> manifestJson;
+                std::string type = manifestJson["type"];
+                if (type == NativePluginManagerName) {
+                    std::string pluginName  = manifestJson["name"];
+                    std::string pluginEntry = manifestJson["entry"];
+                    Info("Preload: {}", pluginName);
+                    pluginEntry = (entry.path() / pluginEntry).string();
+                    if (!exists(pluginEntry)) {
+                        Error("Entry not found: {}", pluginEntry);
+                        continue;
+                    }
+                    loadLibrary(pluginEntry);
+                    preloadList.insert(pluginEntry);
+                }
+            } catch (const nlohmann::json::parse_error& e) { Error("Error parsing manifest file: {}", e.what()); }
         }
     }
-    if (!loadLeviLamina()) {
+}
+
+bool checkLeviLamina() { return exists(path("LeviLamina.dll")); }
+
+bool loadLeviLamina() { return loadLibrary("LeviLamina.dll"); }
+
+void setup() {
+    if (!checkLeviLamina()) {
         Warn("LeviLamina not found, PreLoader is running as DLL Loader...");
         loadRawLibraries();
+    } else {
+        loadPreloadNativePlugins();
+        if (!loadLeviLamina()) {
+            Error("Fail to load LeviLamina. Exiting...");
+            exit(1);
+        }
     }
 }
 
