@@ -33,6 +33,13 @@ using std::wstring;
 
 std::set<std::string> preloadList;
 
+#include <string_view>
+namespace pl::plugin {
+
+constexpr std::string_view NativePluginManagerName = "preload-native";
+
+}
+
 namespace pl {
 
 void addLibraryToPath() {
