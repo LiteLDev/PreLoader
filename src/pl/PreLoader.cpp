@@ -8,6 +8,7 @@
 #include <ostream>
 #include <set>
 #include <string>
+#include <string_view>
 
 #include "pl/dependency/DependencyWalker.h"
 #include "pl/internal/Logger.h"
@@ -33,14 +34,9 @@ using std::wstring;
 
 std::set<std::string> preloadList;
 
-#include <string_view>
-namespace pl::plugin {
+namespace pl {
 
 constexpr std::string_view NativePluginManagerName = "preload-native";
-
-}
-
-namespace pl {
 
 void addLibraryToPath() {
     auto* buffer = new (std::nothrow) WCHAR[MAX_PATH_LENGTH];
@@ -123,7 +119,7 @@ void loadPreloadNativePlugins() {
                 nlohmann::json manifestJson;
                 manifestFile >> manifestJson;
                 std::string type = manifestJson["type"];
-                if (type == plugin::NativePluginManagerName) {
+                if (type == NativePluginManagerName) {
                     std::string pluginName  = manifestJson["name"];
                     std::string pluginEntry = manifestJson["entry"];
                     Info("Preload: {}", pluginName);
