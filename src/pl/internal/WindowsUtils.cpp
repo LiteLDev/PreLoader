@@ -1,11 +1,24 @@
 #include "pl/internal/WindowsUtils.h"
-#include "StringUtils.h"
 
+#include <algorithm>
+#include <cctype>
+#include <ctime>
 #include <filesystem>
+#include <string>
+#include <utility>
 
-#include <Windows.h>
+#include "pl/internal/StringUtils.h"
+
+#include <windows.h>
 
 #include <Psapi.h>
+#include <libloaderapi.h>
+#include <minwinbase.h>
+#include <minwindef.h>
+#include <processthreadsapi.h>
+#include <sysinfoapi.h>
+#include <winbase.h>
+#include <winnt.h>
 
 namespace pl::utils {
 std::string GetCallerModuleFileName(unsigned long FramesToSkip) {

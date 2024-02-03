@@ -1,12 +1,18 @@
-//
-// Created by rimuruchan on 2023/2/11.
-//
 #include "pl/Hook.h"
 
+#include <cstring>
+#include <memory>
 #include <mutex>
+#include <set>
 #include <unordered_map>
 
-#include <Windows.h>
+#include <windows.h>
+
+#include <memoryapi.h>
+#include <minwindef.h>
+#include <processthreadsapi.h>
+#include <winerror.h>
+#include <winnt.h>
 
 #include "detours/detours.h"
 

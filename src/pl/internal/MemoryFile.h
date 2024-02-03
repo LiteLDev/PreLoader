@@ -1,6 +1,11 @@
 #pragma once
 
-#include <Windows.h>
+#include <windows.h>
+
+#include <fileapi.h>
+#include <handleapi.h>
+#include <memoryapi.h>
+#include <winnt.h>
 
 namespace pl::utils {
 

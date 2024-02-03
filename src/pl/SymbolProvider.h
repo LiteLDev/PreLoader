@@ -1,5 +1,11 @@
 #pragma once
 
+#ifdef __cplusplus
+#include <cstddef>
+#else
+#include <stddef.h>
+#endif
+
 #include "pl/internal/Macro.h"
 
 #ifdef __cplusplus

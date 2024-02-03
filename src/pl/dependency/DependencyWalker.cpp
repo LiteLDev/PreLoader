@@ -1,22 +1,31 @@
 #include "pl/dependency/DependencyWalker.h"
-#include "pl/dependency/IProvider.h"
-#include "pl/dependency/LibrarySearcher.h"
-#include "pl/internal/StringUtils.h"
-#include "pl/internal/WindowsUtils.h"
-#include <demangler/Demangle.h>
-#include <fmt/format.h>
+
+#include <algorithm>
+#include <cctype>
+#include <cstddef>
+#include <filesystem>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <utility>
 
+#include "demangler/Demangle.h"
+#include "fmt/core.h"
+
+#include "pl/dependency/IProvider.h"
+#include "pl/dependency/LibrarySearcher.h"
+#include "pl/internal/StringUtils.h"
+#include "pl/internal/WindowsUtils.h"
+
+namespace fs = std::filesystem;
 using namespace pl::dependency_walker;
 
 static std::unique_ptr<IProvider> createProvider(
-    const std::shared_ptr<LibrarySearcher>& libSearcher,
-    const std::u8string&                    systemRoot,
-    const std::string&                      libName,
-    const std::filesystem::path&            libPath
+    std::shared_ptr<LibrarySearcher> const& libSearcher,
+    std::u8string const&                    systemRoot,
+    std::string const&                      libName,
+    fs::path const&                         libPath
 ) {
     if (libName == "bedrock_server.dll" || libName == "bedrock_server_mod.exe") {
         return std::make_unique<InternalSymbolProvider>();
@@ -25,11 +34,11 @@ static std::unique_ptr<IProvider> createProvider(
     }
 }
 
-static std::unique_ptr<DependencyIssueItem> createDiagnosticMessage(
-    std::filesystem::path                   path,
+static std::unique_ptr<DependencyIssueItem> createDiagnosticMessage( // NOLINT(misc-no-recursion)
+    fs::path const&                         path,
     std::unique_ptr<IProvider>              provider,
-    const std::shared_ptr<LibrarySearcher>& libSearcher,
-    const std::u8string&                    systemRoot
+    std::shared_ptr<LibrarySearcher> const& libSearcher,
+    std::u8string const&                    systemRoot
 ) {
     auto result   = std::make_unique<DependencyIssueItem>();
     result->mPath = path;
@@ -66,8 +75,11 @@ static std::unique_ptr<DependencyIssueItem> createDiagnosticMessage(
     return std::move(result);
 }
 
-static void
-printDependencyError(const std::unique_ptr<DependencyIssueItem>& item, std::ostream& stream, size_t depth = 0) {
+static void printDependencyError( // NOLINT(misc-no-recursion)
+    std::unique_ptr<DependencyIssueItem> const& item,
+    std::ostream&                               stream,
+    size_t                                      depth = 0
+) {
     std::string indent(depth * 3 + 3, ' ');
     if (item->mContainsError) {
         stream << indent << fmt::format("module: {}", pl::utils::u8str2str(item->mPath.u8string())) << std::endl;
@@ -97,15 +109,14 @@ printDependencyError(const std::unique_ptr<DependencyIssueItem>& item, std::ostr
     }
 }
 
-std::unique_ptr<DependencyIssueItem> pl::dependency_walker::pl_diagnostic_dependency(const std::filesystem::path& path
-) {
+std::unique_ptr<DependencyIssueItem> pl::dependency_walker::pl_diagnostic_dependency(fs::path const& path) {
     auto libSearcher = LibrarySearcher::getInstance();
     auto systemRoot  = pl::utils::getSystemRoot().u8string();
     auto provider    = std::make_unique<PortableExecutableProvider>(libSearcher, systemRoot, path);
     return createDiagnosticMessage(path, std::move(provider), libSearcher, systemRoot);
 }
 
-std::string pl::dependency_walker::pl_diagnostic_dependency_string(const std::filesystem::path& path) {
+std::string pl::dependency_walker::pl_diagnostic_dependency_string(fs::path const& path) {
     auto              result = pl_diagnostic_dependency(path);
     std::stringstream stream;
     printDependencyError(result, stream);

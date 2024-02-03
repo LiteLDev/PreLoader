@@ -1,13 +1,31 @@
+#include <algorithm>
+#include <cctype>
+#include <cstdint>
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <functional>
+#include <ios>
+#include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+
+#include "pe_bliss/pe_base.h"
+#include "pe_bliss/pe_factory.h"
+
 #include "pl/dependency/LibrarySearcher.h"
 #include "pl/internal/StringUtils.h"
 #include "pl/internal/WindowsUtils.h"
-#include <filesystem>
-#include <fstream>
-#include <memory>
-#include <pe_bliss/pe_bliss.h>
+
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+
+#include <libloaderapi.h>
+#include <minwindef.h>
+
 
 std::shared_ptr<pl::dependency_walker::LibrarySearcher> pl::dependency_walker::LibrarySearcher::getInstance() {
     static size_t                           envPathHash = 0;

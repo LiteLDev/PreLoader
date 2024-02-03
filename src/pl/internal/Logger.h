@@ -1,44 +1,34 @@
 #pragma once
 
 #include <filesystem>
-#include <fmt/chrono.h>
-#include <fmt/color.h>
-#include <fmt/core.h>
-#include <fmt/format.h>
-#include <fmt/os.h>
 #include <fstream>
-#include <iostream>
-#include <nlohmann/json.hpp>
 #include <string>
+#include <string_view>
 
-#include "WindowsUtils.h"
+#include "fmt/chrono.h" // IWYU pragma: keep
+#include "fmt/color.h"
+#include "fmt/core.h"
+#include "fmt/format.h"
+#include "fmt/os.h" // IWYU pragma: keep
 
-inline bool shouldLogColor;
+#include "nlohmann/json.hpp"
+#include "nlohmann/json_fwd.hpp"
 
-inline void loadConfigFromJson(const std::string& fileName) {
-    std::ifstream file(fileName);
-    if (!file.is_open()) {
-        shouldLogColor = true;
-        return;
-    }
-    nlohmann::json json;
-    file >> json;
-    file.close();
-    if (json.contains("logger") && json["logger"].contains("colorLog")) {
-        shouldLogColor = json["logger"]["colorLog"];
-    } else {
-        shouldLogColor = true;
-    }
-}
+#include "pl/internal/StringUtils.h"
+#include "pl/internal/WindowsUtils.h"
+
+namespace fs = std::filesystem;
+
+inline bool shouldLogColor = true;
 
 inline void loadLoggerConfig() {
-    if (std::filesystem::exists("plugins/LeviLamina/config.json")) {
-        try {
-            loadConfigFromJson("plugins/LeviLamina/config.json");
-        } catch (...) { shouldLogColor = true; }
-    } else {
-        shouldLogColor = true;
-    }
+    try {
+        std::ifstream  file(fs::path{pl::utils::sv2u8sv("plugins/LeviLamina/config.json")});
+        nlohmann::json json;
+        file >> json;
+        file.close();
+        shouldLogColor = json["logger"]["colorLog"];
+    } catch (...) {}
 }
 
 #define COLOR_TIME         fmt::color::light_blue
@@ -60,20 +50,20 @@ inline void loadLoggerConfig() {
     str             += fmt::vformat(__fmt.get(), fmt::make_format_args(__args...));                                    \
     str.append(1, '\n');
 
-template <typename... _Args>
-void inline Info(fmt::format_string<_Args...> __fmt, _Args&&... __args) {
+template <typename... Args>
+void inline Info(fmt::format_string<Args...> __fmt, Args&&... __args) {
     LOG(COLOR_TIME, COLOR_INFO_PREFIX, " INFO ");
     fmt::print(fmt::fg(COLOR_INFO_TEXT), str);
 }
 
-template <typename... _Args>
-void inline Warn(fmt::format_string<_Args...> __fmt, _Args&&... __args) {
+template <typename... Args>
+void inline Warn(fmt::format_string<Args...> __fmt, Args&&... __args) {
     LOG(COLOR_TIME, COLOR_WARN_PREFIX, " WARN ");
     fmt::print(fmt::fg(COLOR_WARN_TEXT) | fmt::emphasis::bold, str);
 }
 
-template <typename... _Args>
-void inline Error(fmt::format_string<_Args...> __fmt, _Args&&... __args) {
+template <typename... Args>
+void inline Error(fmt::format_string<Args...> __fmt, Args&&... __args) {
     LOG(COLOR_TIME, COLOR_ERROR_PREFIX, " ERROR ");
     fmt::print(fmt::fg(COLOR_ERROR_TEXT) | fmt::emphasis::bold, str);
 }

@@ -1,22 +1,35 @@
 #include "pl/SymbolProvider.h"
 
+#include <algorithm>
+#include <cstdint>
 #include <cstdio>
+#include <list>
+#include <string>
 #include <string_view>
-#include <unordered_map>
-#include <vector>
 
-#include <PDB.h>
-#include <PDB_DBIStream.h>
-#include <PDB_InfoStream.h>
-#include <PDB_RawFile.h>
+#include "parallel_hashmap/phmap.h"
 
-#include <parallel_hashmap/phmap.h>
+#include "PDB.h"
+#include "PDB_CoalescedMSFStream.h"
+#include "PDB_DBIStream.h"
+#include "PDB_DBITypes.h"
+#include "PDB_ImageSectionStream.h"
+#include "PDB_InfoStream.h"
+#include "PDB_ModuleInfoStream.h"
+#include "PDB_ModuleSymbolStream.h"
+#include "PDB_PublicSymbolStream.h"
+#include "PDB_RawFile.h"
+#include "PDB_Types.h"
 
 #include "pl/internal/FakeSymbol.h"
 #include "pl/internal/Logger.h"
 #include "pl/internal/MemoryFile.h"
 #include "pl/internal/PdbUtils.h"
 #include "pl/internal/WindowsUtils.h"
+
+#include <libloaderapi.h>
+
+using PDB::ArrayView;
 
 using namespace pl::utils;
 
@@ -32,13 +45,13 @@ Rva2SymbolMap* rvaMap  = nullptr;
 void initFunctionMap(const PDB::RawFile& rawPdbFile, const PDB::DBIStream& dbiStream) {
     Info("Loading symbols from pdb...");
 
-    const PDB::ImageSectionStream imageSectionStream            = dbiStream.CreateImageSectionStream(rawPdbFile);
-    const PDB::CoalescedMSFStream symbolRecordStream            = dbiStream.CreateSymbolRecordStream(rawPdbFile);
-    const PDB::PublicSymbolStream publicSymbolStream            = dbiStream.CreatePublicSymbolStream(rawPdbFile);
-    const PDB::ModuleInfoStream   moduleInfoStream              = dbiStream.CreateModuleInfoStream(rawPdbFile);
-    const PDB::ArrayView<PDB::ModuleInfoStream::Module> modules = moduleInfoStream.GetModules();
+    const PDB::ImageSectionStream imageSectionStream = dbiStream.CreateImageSectionStream(rawPdbFile);
+    const PDB::CoalescedMSFStream symbolRecordStream = dbiStream.CreateSymbolRecordStream(rawPdbFile);
+    const PDB::PublicSymbolStream publicSymbolStream = dbiStream.CreatePublicSymbolStream(rawPdbFile);
+    const PDB::ModuleInfoStream   moduleInfoStream   = dbiStream.CreateModuleInfoStream(rawPdbFile);
 
-    const PDB::ArrayView<PDB::HashRecord> publicSymbolRecord = publicSymbolStream.GetRecords();
+    const ArrayView<PDB::ModuleInfoStream::Module> modules            = moduleInfoStream.GetModules();
+    const ArrayView<PDB::HashRecord>               publicSymbolRecord = publicSymbolStream.GetRecords();
 
     // pre alloc hash buckets, 1.2x for public symbols
     funcMap = new Symbol2RvaMap((size_t)((double)publicSymbolRecord.GetLength() * 1.2));

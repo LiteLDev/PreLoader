@@ -1,8 +1,13 @@
 #pragma once
-#include "pl/dependency/LibrarySearcher.h"
+
+#include <filesystem>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+
+#include "pl/dependency/LibrarySearcher.h"
+
 namespace pl::dependency_walker {
 // IProvider is a common interface to get import/export symbols
 class IProvider {

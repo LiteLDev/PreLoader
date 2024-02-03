@@ -1,6 +1,15 @@
 #include "pl/internal/StringUtils.h"
 
-#include <Windows.h>
+#include <cstddef>
+#include <string>
+#include <string_view>
+#include <vector>
+
+#include <windows.h>
+
+#include <minwindef.h>
+#include <stringapiset.h>
+#include <winnls.h>
 
 std::wstring pl::utils::str2wstr(const std::string& str, UINT codePage) {
     auto  len    = MultiByteToWideChar(codePage, 0, str.c_str(), -1, nullptr, 0);

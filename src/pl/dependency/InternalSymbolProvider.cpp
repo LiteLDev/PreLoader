@@ -1,7 +1,9 @@
-#include "pl/SymbolProvider.h"
 #include "pl/dependency/IProvider.h"
-#include "pl/dependency/LibrarySearcher.h"
-#include <fstream>
+
+#include <string>
+
+#include "pl/SymbolProvider.h"
+
 namespace pl::dependency_walker {
 
 InternalSymbolProvider::InternalSymbolProvider() = default;

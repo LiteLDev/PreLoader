@@ -1,6 +1,11 @@
 ﻿#include "pl/PreLoader.h"
 
+#include <cstddef>
 #include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <new>
+#include <ostream>
 #include <set>
 #include <string>
 
@@ -10,7 +15,16 @@
 
 #include <windows.h>
 
+#include <consoleapi.h>
 #include <consoleapi2.h>
+#include <errhandlingapi.h>
+#include <libloaderapi.h>
+#include <minwindef.h>
+#include <processenv.h>
+#include <winbase.h>
+#include <winnls.h>
+#include <winnt.h>
+
 
 using namespace pl::utils;
 using namespace std::filesystem;

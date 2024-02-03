@@ -1,21 +1,21 @@
 #pragma once
 
-#include <string>
 #include <filesystem>
+#include <memory>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <memory>
 
 #include "pl/internal/Macro.h"
 
 namespace pl::dependency_walker {
 
-struct DependencyIssueItem{
-    bool mContainsError = false;
-    std::filesystem::path mPath{};
-    std::unordered_set<std::string> mMissingModule{};
-    std::unordered_map<std::string,std::unordered_set<std::string>> mMissingProcedure{};
-    std::unordered_map<std::string,std::unique_ptr<DependencyIssueItem>> mDependencies{};
+struct DependencyIssueItem {
+    bool                                                                  mContainsError = false;
+    std::filesystem::path                                                 mPath{};
+    std::unordered_set<std::string>                                       mMissingModule{};
+    std::unordered_map<std::string, std::unordered_set<std::string>>      mMissingProcedure{};
+    std::unordered_map<std::string, std::unique_ptr<DependencyIssueItem>> mDependencies{};
 };
 
 /**
@@ -24,7 +24,7 @@ struct DependencyIssueItem{
  * @param path [in] The path of the library to diagnose.
  * @return result The result of the diagnosis.
  */
-PLAPI std::unique_ptr<DependencyIssueItem> pl_diagnostic_dependency(const std::filesystem::path& path);
+PLAPI std::unique_ptr<DependencyIssueItem> pl_diagnostic_dependency(std::filesystem::path const& path);
 
 /**
  * @brief Diagnose the dependency of a library.
@@ -34,6 +34,6 @@ PLAPI std::unique_ptr<DependencyIssueItem> pl_diagnostic_dependency(const std::f
  *
  * @note the function is an internal function that creates a string instead of a struct.
  */
-std::string pl_diagnostic_dependency_string(const std::filesystem::path& path);
+std::string pl_diagnostic_dependency_string(std::filesystem::path const& path);
 
-}
+} // namespace pl::dependency_walker

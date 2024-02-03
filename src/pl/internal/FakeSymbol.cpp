@@ -1,7 +1,13 @@
 #include "pl/internal/FakeSymbol.h"
 
+#include <cstddef>
+#include <optional>
+#include <string>
+#include <string_view>
 
-#include <demangler/MicrosoftDemangle.h>
+#include "demangler/MicrosoftDemangle.h"
+#include "demangler/MicrosoftDemangleNodes.h"
+#include "demangler/StringViewExtras.h"
 
 namespace pl::fake_symbol {
 

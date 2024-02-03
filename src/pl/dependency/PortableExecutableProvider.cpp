@@ -1,8 +1,19 @@
 #include "pl/dependency/IProvider.h"
-#include "pl/dependency/LibrarySearcher.h"
-#include "pl/internal/WindowsUtils.h"
+
+#include <filesystem>
 #include <fstream>
-#include <pe_bliss/pe_bliss.h>
+#include <ios>
+#include <memory>
+#include <string>
+
+#include "pe_bliss/pe_base.h"
+#include "pe_bliss/pe_exception.h"
+#include "pe_bliss/pe_exports.h"
+#include "pe_bliss/pe_factory.h"
+#include "pe_bliss/pe_imports.h"
+
+#include "pl/dependency/LibrarySearcher.h"
+
 namespace pl::dependency_walker {
 
 PortableExecutableProvider::PortableExecutableProvider(
