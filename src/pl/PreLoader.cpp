@@ -66,59 +66,61 @@ bool loadLibrary(std::string const& libName, bool showFailInfo = true) {
 }
 
 void loadRawLibraries() {
-    std::filesystem::create_directories("plugins");
-    fs::directory_iterator ent("plugins");
-    for (auto& file : ent) {
-        if (!file.is_regular_file()) continue;
+    try {
+        std::filesystem::create_directories("plugins");
+        fs::directory_iterator ent("plugins");
+        for (auto& file : ent) {
+            if (!file.is_regular_file()) continue;
+            auto& path     = file.path();
+            auto  fileName = pl::utils::u8str2str(path.u8string());
 
-        auto& path     = file.path();
-        auto  fileName = pl::utils::u8str2str(path.u8string());
+            std::string ext = pl::utils::u8str2str(path.extension().u8string());
+            if (ext != ".dll") { continue; }
 
-        std::string ext = pl::utils::u8str2str(path.extension().u8string());
-        if (ext != ".dll") { continue; }
+            if (preloadList.count(fileName)) continue;
 
-        if (preloadList.count(fileName)) continue;
-
-        std::string dllFileName = pl::utils::u8str2str(path.filename().u8string());
-        auto        lib         = LoadLibrary(pl::utils::str2wstr(fileName).c_str());
-        if (lib) {
-            Info("Dll <{}> Loaded", dllFileName);
-        } else {
-            Error("Fail to load library <{}>", dllFileName);
-            Error("Error code: {}", GetLastError());
+            std::string dllFileName = pl::utils::u8str2str(path.filename().u8string());
+            auto        lib         = LoadLibrary(pl::utils::str2wstr(fileName).c_str());
+            if (lib) {
+                Info("Dll <{}> Loaded", dllFileName);
+            } else {
+                Error("Fail to load library <{}>", dllFileName);
+                Error("Error code: {}", GetLastError());
+            }
         }
-    }
+    } catch (...) {}
 }
 
 void loadPreloadNativePlugins() {
     namespace fs        = std::filesystem;
     fs::path pluginsDir = ".\\plugins";
-    std::filesystem::create_directories(pluginsDir);
-    for (const auto& entry : fs::directory_iterator(pluginsDir)) {
-        if (!entry.is_directory()) { continue; }
-        fs::path manifestPath = entry.path() / "manifest.json";
-        if (!fs::exists(manifestPath)) { continue; }
-        std::ifstream manifestFile(manifestPath);
-        if (manifestFile) {
-            try {
-                nlohmann::json manifestJson;
-                manifestFile >> manifestJson;
-                std::string type = manifestJson["type"];
-                if (type == NativePluginManagerName) {
-                    std::string pluginName  = manifestJson["name"];
-                    std::string pluginEntry = manifestJson["entry"];
-                    Info("Preloading: {} <{}>", pluginName, pluginEntry);
-                    pluginEntry = (entry.path() / pluginEntry).string();
-                    if (!fs::exists(pluginEntry)) {
-                        Error("Entry not exists: {}", pluginEntry);
-                        continue;
+    try {
+        for (const auto& entry : fs::directory_iterator(pluginsDir)) {
+            if (!entry.is_directory()) { continue; }
+            fs::path manifestPath = entry.path() / "manifest.json";
+            if (!fs::exists(manifestPath)) { continue; }
+            std::ifstream manifestFile(manifestPath);
+            if (manifestFile) {
+                try {
+                    nlohmann::json manifestJson;
+                    manifestFile >> manifestJson;
+                    std::string type = manifestJson["type"];
+                    if (type == NativePluginManagerName) {
+                        std::string pluginName  = manifestJson["name"];
+                        std::string pluginEntry = manifestJson["entry"];
+                        Info("Preloading: {} <{}>", pluginName, pluginEntry);
+                        pluginEntry = (entry.path() / pluginEntry).string();
+                        if (!fs::exists(pluginEntry)) {
+                            Error("Entry not exists: {}", pluginEntry);
+                            continue;
+                        }
+                        loadLibrary(pluginEntry);
+                        preloadList.insert(pluginEntry);
                     }
-                    loadLibrary(pluginEntry);
-                    preloadList.insert(pluginEntry);
-                }
-            } catch (const nlohmann::json::parse_error& e) { Error("Error parsing manifest file: {}", e.what()); }
+                } catch (const nlohmann::json::parse_error& e) { Error("Error parsing manifest file: {}", e.what()); }
+            }
         }
-    }
+    } catch (...) {}
 }
 
 bool checkLeviLamina() { return fs::exists(fs::path{u8"LeviLamina.dll"}); }
