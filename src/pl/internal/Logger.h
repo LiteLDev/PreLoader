@@ -23,7 +23,7 @@ inline bool shouldLogColor = true;
 
 inline void loadLoggerConfig() {
     try {
-        std::ifstream  file(fs::path{pl::utils::sv2u8sv("plugins/LeviLamina/config.json")});
+        std::ifstream  file(fs::path{u8"plugins/LeviLamina/config/config.json"});
         nlohmann::json json;
         file >> json;
         file.close();

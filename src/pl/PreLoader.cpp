@@ -91,7 +91,8 @@ void loadRawLibraries() {
 }
 
 void loadPreloadNativePlugins() {
-    namespace fs        = std::filesystem;
+    namespace fs = std::filesystem;
+    std::filesystem::create_directories("plugins");
     fs::path pluginsDir = ".\\plugins";
     for (const auto& entry : fs::directory_iterator(pluginsDir)) {
         if (!entry.is_directory()) { continue; }
