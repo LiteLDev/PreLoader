@@ -1,40 +1,23 @@
-name: Build
-env:
-  VERSION: v0.0.0
-  ZIP_SHA256: ""
-  DLL_SHA256: ""
-  PDB_SHA256: ""
-  LIB_SHA256: ""
 on:
   push:
     paths:
-      - "**.cpp"
-      - "**.cc"
-      - "**.cxx"
-      - "**.c"
-      - "**.hpp"
-      - "**.hh"
-      - "**.hxx"
-      - "**.h"
-      - ".github/workflows/build.yml"
-      - "**/xmake.lua"
+      - .github/workflows/build.yml
+      - src/**
+      - xmake.lua
   pull_request:
-  release:
-    types:
-      - created
+    paths:
+      - .github/workflows/build.yml
+      - src/**
+      - xmake.lua
   workflow_dispatch:
 
 jobs:
   build:
-    name: Build
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Setup XMake
-        uses: xmake-io/github-action-setup-xmake@v1
-        with:
-          xmake-version: latest
+      - uses: xmake-io/github-action-setup-xmake@v1
 
       - uses: actions/cache@v4
         with:
@@ -47,89 +30,29 @@ jobs:
       - run: |
           xmake repo -u
 
-      - name: Get Release Version Tag
-        if: github.event_name == 'release'
-        run: echo "VERSION=${{ github.ref_name }}" >> $env:GITHUB_ENV
+      - run: |
+          xmake f -a x64 -m release -p windows -v -y
 
-      - name: Get Previous Tag
-        if: github.event_name != 'release'
-        id: previoustag
-        run: |
-          $tag = ((git ls-remote -t --refs --sort=-v:refname -q | select -first 1) -split "/")[2]
-          if ($tag -eq "" -or $tag -eq $null) {
-            $tag = "v0.0.0"
-          }
-          echo "tag=$tag" >> $env:GITHUB_OUTPUT
+      - run: |
+          xmake -v -w -y
 
-      - name: Set Pseudo Version
-        if: github.event_name != 'release'
-        run: |
-          $date = (Get-Date -Format "yyyyMMddHHmmss")
-          $commit = git rev-parse --short HEAD
-          $previous_tag = "${{ steps.previoustag.outputs.tag }}"
-          echo "VERSION=$previous_tag-$date-$commit" >> $env:GITHUB_ENV
+      - run: |
+          xmake package -v -y
 
-      - name: Build PreLoader
-        run: |
-          xmake f -p windows -m release -a x64 --ccache=n -y
-          xmake -w -y
-          xmake p
-
-      - name: Prepare Artifacts
-        run: |
-          mkdir artifacts
-          cp -r build/packages/p/preloader/windows/x64/release/* artifacts
-          mv artifacts preloader-${{ env.VERSION }}-windows-amd64
-          mkdir artifacts
-          mv preloader-${{ env.VERSION }}-windows-amd64 artifacts/
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
-          name: preloader-${{ env.VERSION }}-windows-amd64
-          path: artifacts
+          name: preloader-windows-x64-${{ github.sha }}
+          path: |
+            build/packages/p/preloader/windows/x64/release/
 
-  upload-to-release:
-    name: Upload to Release
-    needs:
-      - build
-    runs-on: ubuntu-latest
-    if: github.event_name == 'release'
+  check-style:
+    runs-on: windows-latest
     steps:
-      - name: Get Version
-        run: echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+      - uses: actions/checkout@v4
 
-      - name: Download Artifacts
-        uses: actions/download-artifact@v3
+      - run: |
+          choco install llvm -y --version=17.0.6
 
-      - name: Compress Artifacts
-        id: compress
-        run: |
-          mv preloader-${{ env.VERSION }}-windows-amd64 artifacts
-          mv artifacts/preloader-${{ env.VERSION }}-windows-amd64 .
-          cd preloader-${{ env.VERSION }}-windows-amd64
-          zip -r ../preloader-${{ env.VERSION }}-windows-amd64.zip *
-          cd ..
-          echo "ZIP_SHA256=$(sha256sum preloader-${{ env.VERSION }}-windows-amd64.zip | cut -d ' ' -f 1)" >> $GITHUB_ENV
-          echo "DLL_SHA256=$(sha256sum preloader-${{ env.VERSION }}-windows-amd64/bin/PreLoader.dll | cut -d ' ' -f 1)" >> $GITHUB_ENV
-          echo "PDB_SHA256=$(sha256sum preloader-${{ env.VERSION }}-windows-amd64/bin/PreLoader.pdb | cut -d ' ' -f 1)" >> $GITHUB_ENV
-          echo "LIB_SHA256=$(sha256sum preloader-${{ env.VERSION }}-windows-amd64/lib/PreLoader.lib | cut -d ' ' -f 1)" >> $GITHUB_ENV
-        shell: bash
-
-      - name: Upload Release Assets
-        uses: softprops/action-gh-release@v1
-        with:
-          append_body: true
-          files: |
-            preloader-${{ env.VERSION }}-windows-amd64.zip
-            preloader-${{ env.VERSION }}-windows-amd64/bin/PreLoader.dll
-            preloader-${{ env.VERSION }}-windows-amd64/bin/PreLoader.pdb
-            preloader-${{ env.VERSION }}-windows-amd64/lib/PreLoader.lib
-          body: |
-            ---
-            | File                                           | SHA256                |
-            | :--------------------------------------------- | :-------------------- |
-            | preloader-${{ env.VERSION }}-windows-amd64.zip | ${{ env.ZIP_SHA256 }} |
-            | PreLoader.dll                                  | ${{ env.DLL_SHA256 }} |
-            | PreLoader.pdb                                  | ${{ env.PDB_SHA256 }} |
-            | PreLoader.lib                                  | ${{ env.LIB_SHA256 }} |
+      - run: |
+          Get-ChildItem src/ -Filter *.cpp -Recurse | ForEach-Object { clang-format -i -Werror $_.FullName }
+          Get-ChildItem src/ -Filter *.h -Recurse | ForEach-Object { clang-format -i -Werror $_.FullName }

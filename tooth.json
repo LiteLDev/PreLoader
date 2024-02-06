@@ -8,12 +8,16 @@
         "author": "LiteLDev",
         "tags": []
     },
-    "asset_url": "https://github.com/LiteLDev/PreLoader/releases/download/v1.5.1/preloader-v1.5.1-windows-amd64.zip",
+    "asset_url": "https://github.com/LiteLDev/PreLoader/releases/download/v1.5.1/preloader-windows-x64.zip",
     "files": {
         "place": [
             {
                 "src": "bin/PreLoader.dll",
                 "dest": "PreLoader.dll"
+            },
+            {
+                "src": "bin/PreLoader.pdb",
+                "dest": "PreLoader.pdb"
             }
         ]
     }
