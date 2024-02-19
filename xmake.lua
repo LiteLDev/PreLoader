@@ -3,21 +3,17 @@ add_rules("mode.debug", "mode.release")
 add_repositories("liteldev-repo https://github.com/LiteLDev/xmake-repo.git")
 
 if not has_config("vs_runtime") then
-    if is_mode("debug") then
-        set_runtimes("MDd")
-    else
-        set_runtimes("MD")
-    end
+    set_runtimes("MD")
 end
 
-add_requires("fmt 10.1.1")
+add_requires("fmt")
 add_requires("raw_pdb 2022.10.17")
-add_requires("nlohmann_json v3.11.2")
+add_requires("nlohmann_json")
 add_requires("parallel-hashmap 1.35")
 add_requires("pe_bliss")
 
 add_requires("detours v4.0.1-xmake.1")
-add_requires("demangler v17.0.7")
+add_requires("demangler ~17")
 
 target("PreLoader")
     set_kind("shared")
