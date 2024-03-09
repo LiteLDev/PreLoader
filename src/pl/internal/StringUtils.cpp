@@ -12,23 +12,23 @@
 #include <winnls.h>
 
 std::wstring pl::utils::str2wstr(const std::string& str, UINT codePage) {
-    auto  len    = MultiByteToWideChar(codePage, 0, str.c_str(), -1, nullptr, 0);
-    auto* buffer = new wchar_t[len];
-    MultiByteToWideChar(codePage, 0, str.c_str(), -1, buffer, len);
-    std::wstring result = std::wstring(buffer);
-    delete[] buffer;
-    return result;
+    int          len = MultiByteToWideChar(codePage, 0, str.data(), (int)str.size(), nullptr, 0);
+    std::wstring wstr;
+    if (len == 0) { return wstr; }
+    wstr.reserve(len);
+    MultiByteToWideChar(codePage, 0, str.data(), (int)str.size(), wstr.data(), len);
+    return wstr;
 }
 
 std::wstring pl::utils::str2wstr(const std::string& str) { return str2wstr(str, CP_UTF8); }
 
 std::string pl::utils::wstr2str(const std::wstring& wstr) {
-    auto  len    = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, nullptr);
-    char* buffer = new char[len];
-    WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, buffer, len, nullptr, nullptr);
-    std::string result = std::string(buffer);
-    delete[] buffer;
-    return result;
+    int         len = WideCharToMultiByte(CP_UTF8, 0, wstr.data(), (int)wstr.size(), nullptr, 0, nullptr, nullptr);
+    std::string ret;
+    if (len == 0) { return ret; }
+    ret.reserve(len);
+    WideCharToMultiByte(CP_UTF8, 0, wstr.data(), (int)wstr.size(), ret.data(), (int)ret.size(), nullptr, nullptr);
+    return ret;
 }
 
 std::vector<std::string_view> pl::utils::split(std::string_view s, std::string_view delimiter) {

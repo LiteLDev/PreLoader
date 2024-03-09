@@ -151,7 +151,7 @@ void* pl_resolve_symbol(const char* symbolName) {
         Error("pl_resolve_symbol called before init");
         return nullptr;
     }
-    auto iter = funcMap->find(std::string(symbolName));
+    auto iter = funcMap->find(std::string_view(symbolName));
     if (iter == funcMap->end()) {
         Error("Could not find function in memory: {}", symbolName);
         Error("Plugin: {}", pl::utils::GetCallerModuleFileName());
@@ -162,7 +162,14 @@ void* pl_resolve_symbol(const char* symbolName) {
 
 void* pl_resolve_symbol_silent(const char* symbolName) {
     if (!funcMap) { return nullptr; }
-    auto iter = funcMap->find(std::string(symbolName));
+    auto iter = funcMap->find(std::string_view(symbolName));
+    if (iter == funcMap->end()) { return nullptr; }
+    return (void*)(imageBaseAddr + iter->second);
+}
+
+void* pl_resolve_symbol_silent_n(const char* symbolName, size_t size) {
+    if (!funcMap) { return nullptr; }
+    auto iter = funcMap->find(std::string_view(symbolName, size));
     if (iter == funcMap->end()) { return nullptr; }
     return (void*)(imageBaseAddr + iter->second);
 }

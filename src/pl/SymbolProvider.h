@@ -33,6 +33,17 @@ PLCAPI void* pl_resolve_symbol(const char* symbolName);
 PLCAPI void* pl_resolve_symbol_silent(const char* symbolName);
 
 /**
+ * @brief Resolve a symbol name to a function address.
+ *
+ * @param symbolName [in] The symbol name.
+ * @param symbolName [in] The name size.
+ * @return result The function address. nullptr if the function is not found.
+ *
+ * @note This function will not print error message if the function is not found.
+ */
+PLCAPI void* pl_resolve_symbol_silent_n(const char* symbolName, size_t size);
+
+/**
  * @brief Get the symbol name of a function address.
  *
  * @param funcAddr [in] The function address.
