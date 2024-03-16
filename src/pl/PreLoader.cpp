@@ -135,7 +135,7 @@ void setup() {
     }
     loadPreloadNativePlugins();
     if (!loadLeviLamina()) {
-        Error("Fail to load LeviLamina. Exiting...");
+        Error("Failed to load LeviLamina. Please check your vcredist is up to date. Exiting...");
         exit(1);
     }
 }
