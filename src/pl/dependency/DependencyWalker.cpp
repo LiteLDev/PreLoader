@@ -76,22 +76,22 @@ static std::unique_ptr<DependencyIssueItem> createDiagnosticMessage( // NOLINT(m
 }
 
 static void printDependencyError( // NOLINT(misc-no-recursion)
-    std::unique_ptr<DependencyIssueItem> const& item,
-    std::ostream&                               stream,
-    size_t                                      depth = 0
+    DependencyIssueItem const& item,
+    std::ostream&              stream,
+    size_t                     depth = 0
 ) {
     std::string indent(depth * 3 + 3, ' ');
-    if (item->mContainsError) {
-        stream << indent << fmt::format("module: {}", pl::utils::u8str2str(item->mPath.u8string())) << std::endl;
-        if (!item->mMissingModule.empty()) {
+    if (item.mContainsError) {
+        stream << indent << fmt::format("module: {}", pl::utils::u8str2str(item.mPath.u8string())) << std::endl;
+        if (!item.mMissingModule.empty()) {
             stream << indent << "missing module:" << std::endl;
-            for (const auto& missingModule : item->mMissingModule) {
+            for (const auto& missingModule : item.mMissingModule) {
                 stream << indent << "|- " << missingModule << std::endl;
             }
         }
-        if (!item->mMissingProcedure.empty()) {
+        if (!item.mMissingProcedure.empty()) {
             stream << indent << "missing procedure:" << std::endl;
-            for (const auto& [module, missingProcedure] : item->mMissingProcedure) {
+            for (const auto& [module, missingProcedure] : item.mMissingProcedure) {
                 stream << indent << "|- " << module << std::endl;
                 for (const auto& procedure : missingProcedure) {
                     stream << indent << "|---- " << procedure << std::endl;
@@ -101,24 +101,30 @@ static void printDependencyError( // NOLINT(misc-no-recursion)
                 }
             }
         }
-        if (!item->mDependencies.empty()) {
-            for (const auto& [module, subItem] : item->mDependencies) {
-                printDependencyError(subItem, stream, depth + 1);
+        if (!item.mDependencies.empty()) {
+            for (const auto& [module, subItem] : item.mDependencies) {
+                printDependencyError(*subItem, stream, depth + 1);
             }
         }
     }
 }
 
-std::unique_ptr<DependencyIssueItem> pl::dependency_walker::pl_diagnostic_dependency(fs::path const& path) {
+static void deleteDependencyIssueItem(DependencyIssueItem* item) { delete item; }
+
+std::unique_ptr<DependencyIssueItem, void (*)(DependencyIssueItem*)>
+pl::dependency_walker::pl_diagnostic_dependency(fs::path const& path) {
     auto libSearcher = LibrarySearcher::getInstance();
     auto systemRoot  = pl::utils::getSystemRoot().u8string();
     auto provider    = std::make_unique<PortableExecutableProvider>(libSearcher, systemRoot, path);
-    return createDiagnosticMessage(path, std::move(provider), libSearcher, systemRoot);
+    return {
+        createDiagnosticMessage(path, std::move(provider), libSearcher, systemRoot).release(),
+        deleteDependencyIssueItem
+    };
 }
 
 std::string pl::dependency_walker::pl_diagnostic_dependency_string(fs::path const& path) {
     auto              result = pl_diagnostic_dependency(path);
     std::stringstream stream;
-    printDependencyError(result, stream);
+    printDependencyError(*result, stream);
     return stream.str();
 }
