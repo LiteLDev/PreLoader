@@ -25,7 +25,9 @@ struct DependencyIssueItem {
  * @return result The result of the diagnosis.
  */
 PLAPI std::unique_ptr<DependencyIssueItem, void (*)(DependencyIssueItem*)>
-      pl_diagnostic_dependency(std::filesystem::path const& path);
+      pl_diagnostic_dependency_new(std::filesystem::path const& path);
+
+PLAPI std::unique_ptr<DependencyIssueItem> pl_diagnostic_dependency(std::filesystem::path const& path);
 
 /**
  * @brief Diagnose the dependency of a library.

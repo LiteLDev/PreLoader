@@ -112,7 +112,7 @@ static void printDependencyError( // NOLINT(misc-no-recursion)
 static void deleteDependencyIssueItem(DependencyIssueItem* item) { delete item; }
 
 std::unique_ptr<DependencyIssueItem, void (*)(DependencyIssueItem*)>
-pl::dependency_walker::pl_diagnostic_dependency(fs::path const& path) {
+pl::dependency_walker::pl_diagnostic_dependency_new(fs::path const& path) {
     auto libSearcher = LibrarySearcher::getInstance();
     auto systemRoot  = pl::utils::getSystemRoot().u8string();
     auto provider    = std::make_unique<PortableExecutableProvider>(libSearcher, systemRoot, path);
@@ -122,8 +122,13 @@ pl::dependency_walker::pl_diagnostic_dependency(fs::path const& path) {
     };
 }
 
+std::unique_ptr<DependencyIssueItem> pl::dependency_walker::pl_diagnostic_dependency(std::filesystem::path const& path
+) {
+    return std::unique_ptr<DependencyIssueItem>(pl_diagnostic_dependency_new(path).release());
+}
+
 std::string pl::dependency_walker::pl_diagnostic_dependency_string(fs::path const& path) {
-    auto              result = pl_diagnostic_dependency(path);
+    auto              result = pl_diagnostic_dependency_new(path);
     std::stringstream stream;
     printDependencyError(*result, stream);
     return stream.str();
