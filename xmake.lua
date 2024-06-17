@@ -6,14 +6,14 @@ if not has_config("vs_runtime") then
     set_runtimes("MD")
 end
 
-add_requires("fmt")
+add_requires("fmt 10.2.1")
 add_requires("raw_pdb 2022.10.17")
-add_requires("nlohmann_json")
+add_requires("nlohmann_json v3.11.3")
 add_requires("parallel-hashmap 1.35")
-add_requires("pe_bliss")
+add_requires("pe_bliss v1.0.0")
 
 add_requires("detours v4.0.1-xmake.1")
-add_requires("demangler ~17")
+add_requires("demangler v17.0.7")
 
 target("PreLoader")
     set_kind("shared")
