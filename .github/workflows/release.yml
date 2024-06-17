@@ -82,6 +82,10 @@ jobs:
         with:
           append_body: true
           body: |
+            
+            ---
+            | File | SHA-256 |
+            | :--- | :------ |
             | preloader-windows-x64.zip | ${{ steps.calculate-sha256.outputs.sha256 }} |
           files: |
             preloader-windows-x64.zip
