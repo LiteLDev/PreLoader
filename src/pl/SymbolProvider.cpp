@@ -253,6 +253,7 @@ const char* const* pl_lookup_symbol_disp(void* func, size_t* resultLength, unsig
         result[i] = new char[sym->length() + 1];
         std::copy(sym->begin(), sym->end(), result[i]);
         result[i][sym->length()] = '\0';
+        i++;
     }
     return result;
 }
