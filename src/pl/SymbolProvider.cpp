@@ -127,14 +127,12 @@ void initFunctionMap(std::string_view compressed) {
             rrva         |= (uint32_t)(data[i] & 0x7F) << shift_amount;
             shift_amount += 7;
         } while ((data[i++] & 0x80) != 0);
-        rva += rrva;
-
-        if (skipped) {
-            for (; data[i] != '\n'; i++) {}
-            continue;
-        }
-        std::string name;
-        for (; data[i] != '\n'; i++) { name += data[i]; }
+        rva        += rrva;
+        auto begin  = i;
+        i           = data.find_first_of('\n', begin);
+        if (i == std::string::npos) { break; }
+        if (skipped) { continue; }
+        std::string name(data, begin, i - begin);
         if (!fromModule) {
             auto fake = pl::fake_symbol::getFakeSymbol(name);
             if (fake.has_value()) funcMap->emplace(fake.value(), rva);
