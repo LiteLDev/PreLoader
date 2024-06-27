@@ -53,6 +53,8 @@ PLCAPI void* pl_resolve_symbol_silent_n(const char* symbolName, size_t size);
  */
 PLCAPI const char* const* pl_lookup_symbol(void* func, size_t* resultLength);
 
+PLCAPI const char* const* pl_lookup_symbol_disp(void* func, size_t* resultLength, unsigned int* displacement);
+
 /**
  * @brief Free the result of pl_lookup_symbol.
  *

@@ -14,6 +14,7 @@ add_requires("pe_bliss v1.0.0")
 
 add_requires("detours v4.0.1-xmake.1")
 add_requires("demangler v17.0.7")
+add_requires("snappy 1.1.10")
 
 target("PreLoader")
     set_kind("shared")
@@ -25,4 +26,4 @@ target("PreLoader")
     add_defines("PRELOADER_EXPORT", "UNICODE")
     add_cxflags("/utf-8", "/EHa")
     add_files("src/**.cpp")
-    add_packages("raw_pdb", "nlohmann_json", "parallel-hashmap", "demangler", "detours", "fmt", "pe_bliss")
+    add_packages("raw_pdb", "nlohmann_json", "parallel-hashmap", "demangler", "detours", "fmt", "pe_bliss", "snappy")
