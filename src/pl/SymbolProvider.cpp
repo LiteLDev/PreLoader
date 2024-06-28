@@ -119,7 +119,7 @@ void initFunctionMap(std::string_view compressed) {
     for (size_t i = 0; i < data.size(); i++) {
         uint8_t    c          = data[i++];
         bool const isFunction = c & (1 << 0);
-        bool const fromModule = c & (1 << 1);
+        bool const isPublic   = c & (1 << 1);
         bool const skipped    = c & (1 << 2);
         uint32_t   rrva{0};
         int        shift_amount = 0;
@@ -133,7 +133,7 @@ void initFunctionMap(std::string_view compressed) {
         if (i == std::string::npos) { break; }
         if (skipped) { continue; }
         std::string name(data, begin, i - begin);
-        if (!fromModule) {
+        if (isPublic) {
             auto fake = pl::fake_symbol::getFakeSymbol(name);
             if (fake.has_value()) funcMap->emplace(fake.value(), rva);
             if (isFunction) {
