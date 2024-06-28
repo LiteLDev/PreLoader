@@ -64,33 +64,6 @@ bool loadLibrary(std::string const& libName, bool showFailInfo = true) {
     }
     return false;
 }
-
-void loadRawLibraries() {
-    try {
-        std::filesystem::create_directories("plugins");
-        fs::directory_iterator ent("plugins");
-        for (auto& file : ent) {
-            if (!file.is_regular_file()) continue;
-            auto& path     = file.path();
-            auto  fileName = pl::utils::u8str2str(path.u8string());
-
-            std::string ext = pl::utils::u8str2str(path.extension().u8string());
-            if (ext != ".dll") { continue; }
-
-            if (preloadList.count(fileName)) continue;
-
-            std::string dllFileName = pl::utils::u8str2str(path.filename().u8string());
-            auto        lib         = LoadLibrary(pl::utils::str2wstr(fileName).c_str());
-            if (lib) {
-                Info("Dll <{}> Loaded", dllFileName);
-            } else {
-                Error("Fail to load library <{}>", dllFileName);
-                Error("Error code: {}", GetLastError());
-            }
-        }
-    } catch (...) {}
-}
-
 void loadPreloadNativePlugins() {
     namespace fs        = std::filesystem;
     fs::path pluginsDir = ".\\plugins";
@@ -122,50 +95,41 @@ void loadPreloadNativePlugins() {
         }
     } catch (...) {}
 }
-
-bool checkLeviLamina() { return fs::exists(fs::path{u8"LeviLamina.dll"}); }
-
-bool loadLeviLamina() { return loadLibrary("LeviLamina.dll"); }
-
-void setup() {
-    if (!checkLeviLamina()) {
-        Warn("LeviLamina not found, PreLoader is running as DLL Loader...");
-        loadRawLibraries();
-        return;
-    }
-    loadPreloadNativePlugins();
-    if (!loadLeviLamina()) {
-        Error("Failed to load LeviLamina. Please check your vcredist is up to date. Exiting...");
-        exit(1);
-    }
-}
-
 void init() {
     loadLoggerConfig();
     pl::symbol_provider::init();
-    setup();
+    loadPreloadNativePlugins();
 }
 } // namespace pl
 
+void openConsole() {
+    AllocConsole();
+    SetConsoleTitleA("Debug Console");
+    HANDLE hCon = GetStdHandle(STD_OUTPUT_HANDLE);
+    INT    hCrt = _open_osfhandle((intptr_t)hCon, _O_TEXT);
+    FILE*  hf   = _fdopen(hCrt, "w");
+    setvbuf(hf, NULL, _IONBF, 0);
+    *stdout = *hf;
+    freopen("CONOUT$", "w+t", stdout);
+}
 
 [[maybe_unused]] BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
     if (ul_reason_for_call != DLL_PROCESS_ATTACH) return TRUE;
 
+    auto mainExe = pl::utils::getModulePath(nullptr).value();
+#ifdef PL_DEBUG
+    if (mainExe.filename() == L"Minecraft.Windows.exe") openConsole();
+#endif
     SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);
-
     DWORD mode;
     GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &mode);
     SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 
     // Change current working dir to current module path to make sure we can load plugins correctly
-    auto buffer = new wchar_t[pl::utils::MAX_PATH_LENGTH];
-    GetModuleFileNameW(hModule, buffer, pl::utils::MAX_PATH_LENGTH);
-    std::wstring path(buffer);
-    auto         cwd = path.substr(0, path.find_last_of('\\'));
-    SetCurrentDirectoryW(cwd.c_str());
-    SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOALIGNMENTFAULTEXCEPT);
+    SetCurrentDirectoryW(mainExe.parent_path().c_str());
 
+    SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX | SEM_NOALIGNMENTFAULTEXCEPT);
     pl::init();
     return TRUE;
 }

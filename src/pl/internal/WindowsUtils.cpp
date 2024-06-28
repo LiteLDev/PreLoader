@@ -21,24 +21,73 @@
 #include <winnt.h>
 
 namespace pl::utils {
-std::string GetCallerModuleFileName(unsigned long FramesToSkip) {
-    static const int maxFrameCount = 1;
 
-    void* frames[maxFrameCount];
-    int   frameCount = CaptureStackBackTrace(FramesToSkip + 2, maxFrameCount, frames, nullptr);
+template <std::invocable<wchar_t*, size_t, size_t&> Fn>
+[[nodiscard]] inline std::optional<std::wstring> adaptFixedSizeToAllocatedResult(Fn&& callback) noexcept {
+    constexpr size_t arraySize = 256;
 
-    if (0 < frameCount) {
-        HMODULE hModule;
-        GetModuleHandleExW(
-            GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-            (LPCWSTR)frames[0],
-            &hModule
-        );
-        wchar_t buf[MAX_PATH_LENGTH] = {0};
-        GetModuleFileNameExW(GetCurrentProcess(), hModule, buf, MAX_PATH_LENGTH);
-        return u8str2str(std::filesystem::path(buf).filename().u8string());
+    wchar_t value[arraySize]{};
+    size_t  valueLengthNeededWithNull{};
+
+    std::optional<std::wstring> result{std::in_place};
+
+    if (!std::invoke(std::forward<Fn>(callback), value, arraySize, valueLengthNeededWithNull)) {
+        result.reset();
+        return result;
     }
-    return "Unknown";
+    if (valueLengthNeededWithNull <= arraySize) {
+        return std::optional<std::wstring>{std::in_place, value, valueLengthNeededWithNull - 1};
+    }
+    do {
+        result->resize(valueLengthNeededWithNull - 1);
+        if (!std::invoke(std::forward<Fn>(callback), result->data(), result->size() + 1, valueLengthNeededWithNull)) {
+            result.reset();
+            return result;
+        }
+    } while (valueLengthNeededWithNull > result->size() + 1);
+    if (valueLengthNeededWithNull <= result->size()) { result->resize(valueLengthNeededWithNull - 1); }
+    return result;
+}
+
+void* getModuleHandle(void* addr) {
+    HMODULE hModule = nullptr;
+    GetModuleHandleEx(
+        GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+        reinterpret_cast<LPCTSTR>(addr),
+        &hModule
+    );
+    return hModule;
+}
+
+std::optional<std::filesystem::path> getModulePath(void* handle, void* process) {
+    return adaptFixedSizeToAllocatedResult(
+        [module = (HMODULE)handle,
+         process](wchar_t* value, size_t valueLength, size_t& valueLengthNeededWithNul) -> bool {
+            DWORD  copiedCount{};
+            size_t valueUsedWithNul{};
+            bool   copyFailed{};
+            bool   copySucceededWithNoTruncation{};
+            if (process != nullptr) {
+                copiedCount      = ::GetModuleFileNameExW(process, module, value, static_cast<DWORD>(valueLength));
+                valueUsedWithNul = static_cast<size_t>(copiedCount) + 1;
+                copyFailed       = (0 == copiedCount);
+                copySucceededWithNoTruncation = !copyFailed && (copiedCount < valueLength - 1);
+            } else {
+                copiedCount                   = ::GetModuleFileNameW(module, value, static_cast<DWORD>(valueLength));
+                valueUsedWithNul              = static_cast<size_t>(copiedCount) + 1;
+                copyFailed                    = (0 == copiedCount);
+                copySucceededWithNoTruncation = !copyFailed && (copiedCount < valueLength);
+            }
+            if (copyFailed) { return false; }
+            // When the copy truncated, request another try with more space.
+            valueLengthNeededWithNul = copySucceededWithNoTruncation ? valueUsedWithNul : (valueLength * 2);
+            return true;
+        }
+    );
+}
+std::string getModuleFileName(void* handle, void* process) {
+    if (auto res = getModulePath(handle, process)) { return u8str2str(res->stem().u8string()); }
+    return "unknown module";
 }
 
 std::pair<std::tm, int> getLocalTime() {
@@ -64,6 +113,5 @@ std::filesystem::path getSystemRoot() {
     std::transform(buffer.begin(), buffer.end(), buffer.begin(), ::tolower);
     return buffer;
 }
-
 
 } // namespace pl::utils

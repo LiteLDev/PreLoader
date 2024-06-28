@@ -27,3 +27,6 @@ target("PreLoader")
     add_cxflags("/utf-8", "/EHa")
     add_files("src/**.cpp")
     add_packages("raw_pdb", "nlohmann_json", "parallel-hashmap", "demangler", "detours", "fmt", "pe_bliss", "snappy")
+    if is_mode("debug") then
+        add_defines("PL_DEBUG")
+    end
