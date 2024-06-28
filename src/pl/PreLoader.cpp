@@ -26,17 +26,12 @@
 #include <winnls.h>
 #include <winnt.h>
 
-namespace fs = std::filesystem;
-
-std::set<std::string> preloadList;
-
 namespace pl {
-
-constexpr std::string_view NativePluginManagerName = "preload-native";
+namespace fs = std::filesystem;
 
 bool loadLibrary(std::string const& libName, bool showFailInfo = true) {
     if (LoadLibraryW(pl::utils::str2wstr(libName).c_str())) {
-        Info("{} Loaded.", pl::utils::u8str2str(std::filesystem::path(libName).filename().u8string()));
+        Info("{} Loaded.", pl::utils::u8str2str(std::filesystem::path(libName).stem().u8string()));
         return true;
     }
     if (showFailInfo) {
@@ -64,11 +59,11 @@ bool loadLibrary(std::string const& libName, bool showFailInfo = true) {
     }
     return false;
 }
-void loadPreloadNativePlugins() {
-    namespace fs        = std::filesystem;
-    fs::path pluginsDir = ".\\plugins";
+void loadPreloadNativeMods() {
+    namespace fs     = std::filesystem;
+    fs::path modsDir = ".\\mods";
     try {
-        for (const auto& entry : fs::directory_iterator(pluginsDir)) {
+        for (const auto& entry : fs::directory_iterator(modsDir)) {
             if (!entry.is_directory()) { continue; }
             fs::path manifestPath = entry.path() / "manifest.json";
             if (!fs::exists(manifestPath)) { continue; }
@@ -78,17 +73,16 @@ void loadPreloadNativePlugins() {
                     nlohmann::json manifestJson;
                     manifestFile >> manifestJson;
                     std::string type = manifestJson["type"];
-                    if (type == NativePluginManagerName) {
-                        std::string pluginName  = manifestJson["name"];
-                        std::string pluginEntry = manifestJson["entry"];
-                        Info("Preloading: {} <{}>", pluginName, pluginEntry);
-                        pluginEntry = (entry.path() / pluginEntry).string();
-                        if (!fs::exists(pluginEntry)) {
-                            Error("Entry not exists: {}", pluginEntry);
+                    if (type == preloadModManagerName) {
+                        std::string modName  = manifestJson["name"];
+                        std::string modEntry = manifestJson["entry"];
+                        Info("Preloading: {} <{}>", modName, modEntry);
+                        modEntry = (entry.path() / modEntry).string();
+                        if (!fs::exists(modEntry)) {
+                            Error("Entry not exists: {}", modEntry);
                             continue;
                         }
-                        loadLibrary(pluginEntry);
-                        preloadList.insert(pluginEntry);
+                        loadLibrary(modEntry);
                     }
                 } catch (const nlohmann::json::parse_error& e) { Error("Error parsing manifest file: {}", e.what()); }
             }
@@ -98,7 +92,7 @@ void loadPreloadNativePlugins() {
 void init() {
     loadLoggerConfig();
     pl::symbol_provider::init();
-    loadPreloadNativePlugins();
+    loadPreloadNativeMods();
 }
 } // namespace pl
 
@@ -126,7 +120,7 @@ void openConsole() {
     GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &mode);
     SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 
-    // Change current working dir to current module path to make sure we can load plugins correctly
+    // Change current working dir to current module path to make sure we can load mods correctly
     SetCurrentDirectoryW(mainExe.parent_path().c_str());
 
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX | SEM_NOALIGNMENTFAULTEXCEPT);

@@ -2,7 +2,7 @@
 
 A library preloader for loading LeviLamina
 
-This is the library preloader for [LeviLamina](https://github.com/LiteLDev/LeviLamina). It loads LeviLamina before BDS starts and provides MCAPIs required by LeviLamina and various plugins. We uses windows delay load to expose and remap original bds symbol to our own symbol, and then we will provide them to plugins.
+This is the library preloader for [LeviLamina](https://github.com/LiteLDev/LeviLamina). It loads LeviLamina before game starts and provides MCAPIs required by LeviLamina and various mods. We uses windows delay load to expose and remap original symbol to our own symbol, and then we will provide them to mods.
 
 ## Install
 

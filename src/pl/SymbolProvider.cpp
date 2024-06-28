@@ -204,7 +204,7 @@ void* pl_resolve_symbol(const char* symbolName) {
     auto iter = funcMap->find(std::string_view(symbolName));
     if (iter == funcMap->end()) {
         Error("Could not find function in memory: {}", symbolName);
-        Error("Plugin: {}", pl::utils::getCallerModuleFileName());
+        Error("Module: {}", pl::utils::getCallerModuleFileName());
         return nullptr;
     }
     return (void*)(imageBaseAddr + iter->second);
