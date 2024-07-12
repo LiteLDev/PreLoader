@@ -11,25 +11,12 @@
 #include "fmt/format.h"
 #include "fmt/os.h" // IWYU pragma: keep
 
-#include "nlohmann/json.hpp"
-#include "nlohmann/json_fwd.hpp"
 
+#include "pl/Config.h"
 #include "pl/internal/StringUtils.h"
 #include "pl/internal/WindowsUtils.h"
 
 namespace fs = std::filesystem;
-
-inline bool shouldLogColor = true;
-
-inline void loadLoggerConfig() {
-    try {
-        std::ifstream  file(fs::path{u8"mods/LeviLamina/config/config.json"});
-        nlohmann::json json;
-        file >> json;
-        file.close();
-        shouldLogColor = json["logger"]["colorLog"];
-    } catch (...) {}
-}
 
 #define COLOR_TIME         fmt::color::light_blue
 #define COLOR_INFO_PREFIX  fmt::color::light_sea_green
@@ -46,8 +33,8 @@ inline void loadLoggerConfig() {
 
 #define LOG_PREFIX(prefix, color1, color2)                                                                             \
     auto [time, ms] = ::pl::utils::getLocalTime();                                                                     \
-    fmt::print(shouldLogColor ? fmt::fg(color1) : fmt::text_style(), fmt::format("{:%H:%M:%S}.{:0>3}", time, ms));     \
-    fmt::print(shouldLogColor ? fmt::fg(color2) : fmt::text_style(), prefix);
+    fmt::print(pl::pl_color_log ? fmt::fg(color1) : fmt::text_style(), fmt::format("{:%H:%M:%S}.{:0>3}", time, ms));   \
+    fmt::print(pl::pl_color_log ? fmt::fg(color2) : fmt::text_style(), prefix);
 
 #define LOG(color1, color2, prefix)                                                                                    \
     LOG_PREFIX(prefix, color1, color2);                                                                                \

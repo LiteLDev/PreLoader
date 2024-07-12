@@ -8,11 +8,12 @@
 #include <string>
 #include <string_view>
 
+#include "pl/Config.h"
 #include "pl/dependency/DependencyWalker.h"
 #include "pl/internal/Logger.h"
 #include "pl/internal/StringUtils.h"
 
-#include "nlohmann/json_fwd.hpp"
+#include "nlohmann/json.hpp"
 
 #include <windows.h>
 
@@ -61,7 +62,7 @@ bool loadLibrary(std::string const& libName, bool showFailInfo = true) {
 }
 void loadPreloadNativeMods() {
     namespace fs     = std::filesystem;
-    fs::path modsDir = ".\\mods";
+    fs::path modsDir = (char8_t const*)(pl_mods_path);
     try {
         for (const auto& entry : fs::directory_iterator(modsDir)) {
             if (!entry.is_directory()) { continue; }
@@ -73,7 +74,7 @@ void loadPreloadNativeMods() {
                     nlohmann::json manifestJson;
                     manifestFile >> manifestJson;
                     std::string type = manifestJson["type"];
-                    if (type == preloadModManagerName) {
+                    if (type == pl_mod_manager_name) {
                         std::string modName  = manifestJson["name"];
                         std::string modEntry = manifestJson["entry"];
                         Info("Preloading: {} <{}>", modName, modEntry);
@@ -89,8 +90,10 @@ void loadPreloadNativeMods() {
         }
     } catch (...) {}
 }
+void loadConfig();
+
 void init() {
-    loadLoggerConfig();
+    loadConfig();
     pl::symbol_provider::init();
     loadPreloadNativeMods();
 }

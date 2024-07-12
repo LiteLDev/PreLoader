@@ -22,4 +22,5 @@ std::pair<std::tm, int> getLocalTime();
 
 std::filesystem::path getSystemRoot();
 
+bool isStdoutSupportAnsi();
 } // namespace pl::utils

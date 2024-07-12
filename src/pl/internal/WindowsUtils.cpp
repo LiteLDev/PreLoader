@@ -113,5 +113,9 @@ std::filesystem::path getSystemRoot() {
     std::transform(buffer.begin(), buffer.end(), buffer.begin(), ::tolower);
     return buffer;
 }
-
+bool isStdoutSupportAnsi() {
+    DWORD mode;
+    if (GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &mode)) { return mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING; }
+    return false;
+}
 } // namespace pl::utils
