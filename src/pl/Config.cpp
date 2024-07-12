@@ -19,7 +19,7 @@ char const* pl_mods_path        = "./plugins/"; // TODO: change to mods
 nlohmann::json config;
 
 void loadConfig() try {
-    auto configPath = std::filesystem::path{u8"PreloaderConfig.json"};
+    auto configPath = std::filesystem::path{u8"PreLoaderConfig.json"};
 
     try {
         if (std::filesystem::exists("./mods/")) { pl_mods_path = "./mods/"; } // TODO: remove when release
