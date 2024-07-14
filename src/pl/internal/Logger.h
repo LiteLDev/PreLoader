@@ -16,8 +16,6 @@
 #include "pl/internal/StringUtils.h"
 #include "pl/internal/WindowsUtils.h"
 
-namespace fs = std::filesystem;
-
 #define COLOR_TIME         fmt::color::light_blue
 #define COLOR_INFO_PREFIX  fmt::color::light_sea_green
 #define COLOR_INFO_TEXT    fmt::terminal_color::white
@@ -33,8 +31,11 @@ namespace fs = std::filesystem;
 
 #define LOG_PREFIX(prefix, color1, color2)                                                                             \
     auto [time, ms] = ::pl::utils::getLocalTime();                                                                     \
-    fmt::print(pl::pl_color_log ? fmt::fg(color1) : fmt::text_style(), fmt::format("{:%H:%M:%S}.{:0>3}", time, ms));   \
-    fmt::print(pl::pl_color_log ? fmt::fg(color2) : fmt::text_style(), prefix);
+    fmt::print(                                                                                                        \
+        static_cast<bool>(pl::pl_color_log) ? fmt::fg(color1) : fmt::text_style(),                                     \
+        fmt::format("{:%H:%M:%S}.{:0>3}", time, ms)                                                                    \
+    );                                                                                                                 \
+    fmt::print(static_cast<bool>(pl::pl_color_log) ? fmt::fg(color2) : fmt::text_style(), prefix);
 
 #define LOG(color1, color2, prefix)                                                                                    \
     LOG_PREFIX(prefix, color1, color2);                                                                                \

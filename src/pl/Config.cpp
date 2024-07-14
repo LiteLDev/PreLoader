@@ -19,7 +19,7 @@ char const* pl_mods_path        = "./plugins/"; // TODO: change to mods
 nlohmann::json config;
 
 void loadConfig() try {
-    auto configPath = std::filesystem::path{u8"PreLoaderConfig.json"};
+    auto configPath = std::filesystem::path{u8"./PreLoaderConfig.json"};
 
     try {
         if (std::filesystem::exists("./mods/")) { pl_mods_path = "./mods/"; } // TODO: remove when release
@@ -36,7 +36,7 @@ void loadConfig() try {
     } catch (...) {}
     config.clear();
     config["version"]  = 1;
-    config["colorLog"] = pl_color_log;
+    config["colorLog"] = (bool)pl_color_log;
     config["logLevel"] = pl_log_level;
     config["logPath"]  = pl_log_path;
     config["modsPath"] = pl_mods_path;
