@@ -1,0 +1,29 @@
+format = 4
+id = "github.com/LiteLDev/PreLoader"
+version = "1.16.8"
+
+[info]
+name = "PreLoader"
+description = "A library preloader for loading LeviLamina"
+tags = ["library"]
+
+# LeviLamina depends on PreLoader from both its server variant and its client variant, so the
+# default variant has an entry for each side, both installing the same Windows x64 build.
+
+[[variants.""]]
+side = "server"
+platform = "win-x64"
+
+[[variants."".assets]]
+type = "zip"
+urls = ["https://{{id}}/releases/download/v{{version}}/preloader-v{{version}}-windows-x64.zip"]
+place = [{ src = "bin/PreLoader.dll", dest = "PreLoader.dll" }]
+
+[[variants.""]]
+side = "client"
+platform = "win-x64"
+
+[[variants."".assets]]
+type = "zip"
+urls = ["https://{{id}}/releases/download/v{{version}}/preloader-v{{version}}-windows-x64.zip"]
+place = [{ src = "bin/PreLoader.dll", dest = "PreLoader.dll" }]
